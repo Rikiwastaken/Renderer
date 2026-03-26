@@ -8,6 +8,7 @@
             "args": [
                 "-Iinclude",
                 "src/WinMain.cpp",
+                "src/Window.cpp",
                 "src/WindowsMessageMap.cpp",
                 "-o",
                 "src/WinMain.exe",
