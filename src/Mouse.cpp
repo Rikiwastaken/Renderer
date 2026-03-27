@@ -15,6 +15,11 @@ int Mouse::GetPosY() const noexcept // Get the current Y coordinate of the mouse
     return y;
 }
 
+bool Mouse::IsInWindow() const noexcept // Check if the mouse cursor is currently within the window
+{
+    return isInWindow;
+}
+
 bool Mouse::LeftIsPressed() const noexcept // Check if the left mouse button is currently pressed
 {
     return leftIsPressed;
@@ -49,6 +54,20 @@ void Mouse::OnMouseMove(int x, int y) noexcept // Handle a mouse move event
     this->x = x;
     this->y = y;
     mouseBuffer.push(Mouse::Event(Mouse::Event::Type::Move, *this));
+    TrimBuffer();
+}
+
+void Mouse::OnMouseEnter() noexcept // Handle a mouse enter event (when the cursor enters the window)
+{
+    isInWindow = true;
+    mouseBuffer.push(Mouse::Event(Mouse::Event::Type::Enter, *this));
+    TrimBuffer();
+}
+
+void Mouse::OnMouseLeave() noexcept // Handle a mouse leave event (when the cursor leaves the window)
+{
+    isInWindow = false;
+    mouseBuffer.push(Mouse::Event(Mouse::Event::Type::Leave, *this));
     TrimBuffer();
 }
 

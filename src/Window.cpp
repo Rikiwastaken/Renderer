@@ -194,7 +194,27 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
     case WM_MOUSEMOVE:
     {
         POINTS pt = MAKEPOINTS(lParam);
-        mouse.OnMouseMove(pt.x, pt.y);
+        if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height)
+        {
+            mouse.OnMouseMove(pt.x, pt.y);
+            if (!mouse.IsInWindow())
+            {
+                SetCapture(hWnd); // Capture the mouse input to receive mouse events even when the cursor is outside the window
+                mouse.OnMouseEnter();
+            }
+        }
+        else
+        {
+            if (wParam & (MK_LBUTTON | MK_RBUTTON)) // If a mouse button is pressed, treat it as a move event to update the mouse position
+            {
+                mouse.OnMouseMove(pt.x, pt.y);
+            }
+            else
+            {
+                ReleaseCapture(); // Release the mouse capture when the cursor leaves the window and no buttons are pressed
+                mouse.OnMouseLeave();
+            }
+        }
         break;
     }
     case WM_LBUTTONDOWN:
