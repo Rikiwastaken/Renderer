@@ -44,7 +44,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 }
 
 // Window constructor to create a window with the specified width, height, and name
-Window::Window(int width, int height, const char *name)
+Window::Window(int width, int height, const char *name) : width(width), height(height)
 {
     // Calculate the size of the window rectangle based on the desired client area size
     RECT wr;
