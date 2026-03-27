@@ -19,15 +19,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
         cout << "Creating window..." << endl;
 
-        Window wnd(800, 600, "My Cool Window");
+        Window window(800, 600, "My Cool Window");
 
         // Message loop
         MSG msg;
         int result;
         while ((result = GetMessage(&msg, nullptr, 0, 0)) > 0) // GetMessage returns > 0 if a message is retrieved, 0 if WM_QUIT is received, and < 0 on error
         {
-            TranslateMessage(&msg); // Translates virtual-key messages into character messages
-            DispatchMessage(&msg);  // Dispatches a message to a window procedure
+            TranslateMessage(&msg);                      // Translates virtual-key messages into character messages
+            DispatchMessage(&msg);                       // Dispatches a message to a window procedure
+            if (window.keyboard.KeyIsPressed(VK_ESCAPE)) // Check if the Escape key is pressed to exit the application
+            {
+                PostQuitMessage(0); // Post a WM_QUIT message to end the message loop
+            }
         }
         if (result == -1) // Check for errors in GetMessage
         {

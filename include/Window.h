@@ -1,6 +1,7 @@
 #pragma once
 #include "CustomWindows.h"
 #include "Exceptions.h"
+#include "Keyboard.h"
 
 class Window
 {
@@ -50,6 +51,8 @@ private:
     HWND hWnd;  // handle to the window
     int width;  // width of the window
     int height; // height of the window
+public:
+    Keyboard keyboard; // instance of the keyboard class to handle keyboard input for the window
 };
 
 // error exception helper macro

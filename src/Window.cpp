@@ -138,7 +138,57 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
     case WM_CLOSE:
         PostQuitMessage(0); // End message loop
         return 0;           // Prevent DefWindowProc from destroying again
+    // Handle keyboard input
+    case WM_KEYDOWN:
+    {
+        if (!(lParam & 0x40000000) || keyboard.AutorepeatIsEnabled()) // Check if the key is being held down (autorepeat) and if autorepeat is enabled
+        {
+            keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
+        }
+        break;
+    }
+    case WM_SYSKEYDOWN:
+    {
+        if (!(lParam & 0x40000000) || keyboard.AutorepeatIsEnabled()) // Check if the key is being held down (autorepeat) and if autorepeat is enabled
+        {
+            keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
+        }
+        break;
+    }
+    case WM_KEYUP:
+    {
+        keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
+        break;
+    }
+    case WM_SYSKEYUP:
+    {
+        keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
+        break;
+    }
+    case WM_CHAR:
+    {
+        keyboard.OnChar(static_cast<char>(wParam));
+        break;
+    }
 
+    // reset key states when the window is resized to prevent input issues
+    case WM_SIZE:
+    {
+        keyboard.ClearState();
+        break;
+    }
+    // reset key states when the window is destroyed to prevent input issues
+    case WM_DESTROY:
+    {
+        keyboard.ClearState();
+        break;
+    }
+    // reset key states when the window is loses focus to prevent input issues
+    case WM_KILLFOCUS:
+    {
+        keyboard.ClearState();
+        break;
+    }
     default:
         break;
     }
