@@ -1,4 +1,5 @@
 #include "Mouse.h"
+#include "Window.h"
 
 std::pair<int, int> Mouse::GetPos() const noexcept // Get the current position of the mouse cursor
 {
@@ -116,5 +117,20 @@ void Mouse::TrimBuffer() noexcept // Trim the mouse event buffer to prevent over
     while (mouseBuffer.size() > bufferSize)
     {
         mouseBuffer.pop();
+    }
+}
+
+void Mouse::OnWheelDelta(int x, int y, int delta) noexcept // Handle a mouse wheel event with the specified delta (positive for wheel up, negative for wheel down)
+{
+    wheelDeltaCarry += delta;
+    while (wheelDeltaCarry >= WHEEL_DELTA)
+    {
+        wheelDeltaCarry -= WHEEL_DELTA;
+        OnWheelUp(x, y);
+    }
+    while (wheelDeltaCarry <= -WHEEL_DELTA)
+    {
+        wheelDeltaCarry += WHEEL_DELTA;
+        OnWheelDown(x, y);
     }
 }

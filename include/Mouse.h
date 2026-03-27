@@ -59,16 +59,17 @@ public:
     };
     void Clear() noexcept; // Clear all mouse events from the queue
 private:
-    void OnMouseMove(int x, int y) noexcept;     // Handle a mouse move event
-    void OnMouseEnter() noexcept;                // Handle a mouse enter event (when the cursor enters the window)
-    void OnMouseLeave() noexcept;                // Handle a mouse leave event (when the cursor leaves the window)
-    void OnLeftPressed(int x, int y) noexcept;   // Handle a left mouse button press event
-    void OnLeftReleased(int x, int y) noexcept;  // Handle a left mouse button release event
-    void OnRightPressed(int x, int y) noexcept;  // Handle a right mouse button press event
-    void OnRightReleased(int x, int y) noexcept; // Handle a right mouse button release event
-    void OnWheelUp(int x, int y) noexcept;       // Handle a mouse wheel up event
-    void OnWheelDown(int x, int y) noexcept;     // Handle a mouse wheel
-    void TrimBuffer() noexcept;                  // Trim the mouse event buffer to prevent overflow
+    void OnMouseMove(int x, int y) noexcept;             // Handle a mouse move event
+    void OnMouseEnter() noexcept;                        // Handle a mouse enter event (when the cursor enters the window)
+    void OnMouseLeave() noexcept;                        // Handle a mouse leave event (when the cursor leaves the window)
+    void OnLeftPressed(int x, int y) noexcept;           // Handle a left mouse button press event
+    void OnLeftReleased(int x, int y) noexcept;          // Handle a left mouse button release event
+    void OnRightPressed(int x, int y) noexcept;          // Handle a right mouse button press event
+    void OnRightReleased(int x, int y) noexcept;         // Handle a right mouse button release event
+    void OnWheelUp(int x, int y) noexcept;               // Handle a mouse wheel up event
+    void OnWheelDown(int x, int y) noexcept;             // Handle a mouse wheel
+    void TrimBuffer() noexcept;                          // Trim the mouse event buffer to prevent overflow
+    void OnWheelDelta(int x, int y, int delta) noexcept; // Handle a mouse wheel event with the specified delta (positive for wheel up, negative for wheel down)
 private:
     static constexpr unsigned int bufferSize = 16u; // Maximum size of the mouse event buffer
     int x;                                          // current X coordinate of the mouse
@@ -77,4 +78,5 @@ private:
     bool leftIsPressed;                             // whether the left mouse button is currently pressed
     bool rightIsPressed;                            // whether the right mouse button is currently pressed
     std::queue<Event> mouseBuffer;                  // queue to store mouse events
+    int wheelDeltaCarry = 0;                        // carry for mouse wheel delta to handle partial scrolls
 };
