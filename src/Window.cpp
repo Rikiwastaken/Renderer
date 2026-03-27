@@ -1,5 +1,7 @@
 #include "Window.h"
 #include <iostream>
+#include <sstream>
+#include "Exceptions.h"
 
 Window::WindowClass Window::WindowClass::wndClass; // Define the static instance of the WindowClass
 
@@ -110,4 +112,57 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         break;
     }
     return DefWindowProc(hWnd, msg, wParam, lParam); // Default message handling
+}
+
+// Window Exception
+Window::Exception::Exception(int line, const char *file, HRESULT hr) noexcept
+    : RikiException(line, file), hr(hr)
+{
+}
+
+const char *Window::Exception::what() const noexcept
+{
+    std::ostringstream oss; // Create a string stream to build the what() message
+    oss << GetType() << std::endl
+        << GetOriginString() << std::endl
+        << "[Error Code] " << GetErrorCode() << std::endl
+        << "[Description] " << GetErrorString(); // Append the type of the exception, origin string, error code, and error description to the string stream
+    whatBuffer = oss.str();
+    return whatBuffer.c_str();
+}
+
+const char *Window::Exception::GetType() const noexcept
+{
+    return "Window Exception";
+}
+
+std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
+{
+    char *pMsgBuf = nullptr;
+    DWORD nMsgLen = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, // Flags to specify how the message should be formatted
+        nullptr,                                                                                     // Source of the message (nullptr for system messages)
+        hr,                                                                                          // The error code to translate
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),                                                   // Language for the message
+        reinterpret_cast<char *>(&pMsgBuf),                                                          // Buffer to receive the formatted message
+        0,                                                                                           // Size of the buffer (0 for automatic allocation)
+        nullptr                                                                                      // Arguments for the message (not used here)
+    );
+    if (nMsgLen == 0) // If FormatMessage fails, return a default error message
+    {
+        return "Unidentified error code";
+    }
+    std::string errorString(pMsgBuf); // Convert the formatted message to a std::string
+    LocalFree(pMsgBuf);               // Free the buffer allocated by FormatMessage
+    return errorString;               // Return the translated error string
+}
+
+HRESULT Window::Exception::GetErrorCode() const noexcept
+{
+    return hr; // Return the HRESULT error code associated with the exception
+}
+
+std::string Window::Exception::GetErrorString() const noexcept
+{
+    return TranslateErrorCode(hr); // Return a string representation of the error associated with the HRESULT error code
 }

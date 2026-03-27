@@ -1,8 +1,25 @@
 #pragma once
 #include "CustomWindows.h"
+#include "Exceptions.h"
 
 class Window
 {
+
+public:
+    class Exception : public RikiException
+    {
+    public:
+        Exception(int line, const char *file, HRESULT hr) noexcept; // constructor to create an exception with the specified line number, file name, and HRESULT error code
+        const char *what() const noexcept override;                 // override the what() function from RikiException to provide a description of the exception
+        virtual const char *GetType() const noexcept override;      // override the GetType() function from RikiException to return the type of the exception
+        static std::string TranslateErrorCode(HRESULT hr) noexcept; // static function to translate an HRESULT error code into a human-readable string
+        HRESULT GetErrorCode() const noexcept;                      // function to get the HRESULT error code associated with the exception
+        std::string GetErrorString() const noexcept;                // function to get a string representation of the error associated with the HRESULT error code
+
+    private:
+        HRESULT hr;
+    };
+
 private:
     // singleton manage regirstation and cleanup of the window class
     class WindowClass
@@ -34,3 +51,6 @@ private:
     int width;  // width of the window
     int height; // height of the window
 };
+
+// error exception helper macro
+#define CHWND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
