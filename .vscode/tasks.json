@@ -29,6 +29,7 @@
                 "src/WindowsMessageMap.cpp",
                 "src/Keyboard.cpp",
                 "src/Mouse.cpp",
+                "src/App.cpp",
                 "src/resources.res",
                 "-o",
                 "src/WinMain.exe",

@@ -307,3 +307,23 @@ std::string Window::Exception::GetErrorString() const noexcept
 {
     return TranslateErrorCode(hr); // Return a string representation of the error associated with the HRESULT error code
 }
+
+void Window::SetTitle(const std::string &title)
+{
+    SetWindowTextA(hWnd, title.c_str()); // Set the title of the window using the Windows API function SetWindowTextA
+}
+
+std::optional<int> Window::ProcessMessages() noexcept
+{
+    MSG msg;
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) // Process all pending Windows messages for the window
+    {
+        if (msg.message == WM_QUIT) // Check if the message is WM_QUIT, which indicates that the window should close
+        {
+            return static_cast<int>(msg.wParam); // Return the exit code from the WM_QUIT message
+        }
+        TranslateMessage(&msg); // Translate virtual-key messages into character messages
+        DispatchMessage(&msg);  // Dispatch the message to the window procedure
+    }
+    return std::nullopt; // Return std::nullopt if there are no WM_QUIT messages, indicating that the window should continue running
+}

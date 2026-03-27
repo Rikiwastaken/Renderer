@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include "CustomWindows.h"
 #include "Exceptions.h"
 #include "Keyboard.h"
@@ -40,10 +41,12 @@ private:
     };
 
 public:
-    Window(int width, int height, const char *name); // constructor to create a window with the specified width, height, and name
-    ~Window();                                       // destructor to destroy the window when the object goes out of scope
-    Window(const Window &) = delete;                 // delete copy constructor to prevent copying of the window object
-    Window &operator=(const Window &) = delete;      // delete copy assignment operator to prevent copying of the window object
+    Window(int width, int height, const char *name);      // constructor to create a window with the specified width, height, and name
+    ~Window();                                            // destructor to destroy the window when the object goes out of scope
+    Window(const Window &) = delete;                      // delete copy constructor to prevent copying of the window object
+    Window &operator=(const Window &) = delete;           // delete copy assignment operator to prevent copying of the window object
+    void SetTitle(const std::string &title);              // function to set the title of the window
+    static std::optional<int> ProcessMessages() noexcept; // static function to process Windows messages for the window and return an optional exit code if the window is closed
 private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept; // static window procedure to set up the message handling for the window
     static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept; // static window procedure to handle messages for the window after setup
