@@ -41,7 +41,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 }
 
 // Window constructor to create a window with the specified width, height, and name
-Window::Window(int width, int height, const char *name) noexcept
+Window::Window(int width, int height, const char *name)
 {
     // Calculate the size of the window rectangle based on the desired client area size
     RECT wr;
@@ -50,6 +50,7 @@ Window::Window(int width, int height, const char *name) noexcept
     wr.right = width;
     wr.bottom = height;
     AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE); // Adjust the window rectangle to account for the non-client area (title bar, borders, etc.)
+    throw CHWND_EXCEPT(ERROR_ARENA_TRASHED);                                // Throw an exception if the window creation fails (for demonstration purposes, you can replace this with actual error handling)
     // Create the window with the adjusted size and specified name
     hWnd = CreateWindowEx( // Optional window styles
         0,

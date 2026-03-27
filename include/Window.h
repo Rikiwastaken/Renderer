@@ -38,10 +38,10 @@ private:
     };
 
 public:
-    Window(int width, int height, const char *name) noexcept; // constructor to create a window with the specified width, height, and name
-    ~Window();                                                // destructor to destroy the window when the object goes out of scope
-    Window(const Window &) = delete;                          // delete copy constructor to prevent copying of the window object
-    Window &operator=(const Window &) = delete;               // delete copy assignment operator to prevent copying of the window object
+    Window(int width, int height, const char *name); // constructor to create a window with the specified width, height, and name
+    ~Window();                                       // destructor to destroy the window when the object goes out of scope
+    Window(const Window &) = delete;                 // delete copy constructor to prevent copying of the window object
+    Window &operator=(const Window &) = delete;      // delete copy assignment operator to prevent copying of the window object
 private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept; // static window procedure to set up the message handling for the window
     static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept; // static window procedure to handle messages for the window after setup
@@ -54,3 +54,4 @@ private:
 
 // error exception helper macro
 #define CHWND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
+#define CHWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())
