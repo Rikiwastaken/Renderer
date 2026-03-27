@@ -7,10 +7,7 @@
                 "${workspaceFolder}/src",
                 "C:/msys64/mingw64/include/**"
             ],
-            "defines": [
-                "UNICODE",
-                "_UNICODE"
-            ],
+            "defines": [],
             "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++20",

@@ -13,7 +13,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 {
     try
     {
-
         AllocConsole();
         freopen("CONOUT$", "w", stdout);
         std::cout << "Debug output visible in console!" << std::endl;

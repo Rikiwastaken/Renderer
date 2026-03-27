@@ -2,12 +2,14 @@
 #include <iostream>
 #include <sstream>
 #include "Exceptions.h"
+#include "Resource.h"
 
 Window::WindowClass Window::WindowClass::wndClass; // Define the static instance of the WindowClass
 
 Window::WindowClass::WindowClass() noexcept
     : hInst(GetModuleHandle(nullptr))
 {
+
     WNDCLASSEX wc = {0};
     wc.cbSize = sizeof(wc);          // Set the size of the structure
     wc.style = CS_OWNDC;             // Class style
@@ -15,12 +17,13 @@ Window::WindowClass::WindowClass() noexcept
     wc.cbClsExtra = 0;               // Extra bytes after the window class
     wc.cbWndExtra = 0;               // Extra bytes after the window instance
     wc.hInstance = GetInstance();    // Handle to the instance
-    wc.hIcon = nullptr;              // Handle to the class icon
-    wc.hCursor = nullptr;            // Handle to the class cursor
-    wc.hbrBackground = nullptr;      // Handle to the class background brush
-    wc.lpszMenuName = nullptr;       // Resource name of the class menu
-    wc.lpszClassName = GetName();    // Name of the window class
-    wc.hIconSm = nullptr;            // Handle to the small icon
+    wc.hIcon = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+    // Handle to the class icon
+    wc.hCursor = nullptr;                                                                                               // Handle to the class cursor
+    wc.hbrBackground = nullptr;                                                                                         // Handle to the class background brush
+    wc.lpszMenuName = nullptr;                                                                                          // Resource name of the class menu
+    wc.lpszClassName = GetName();                                                                                       // Name of the window class
+    wc.hIconSm = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR)); // Handle to the small icon
 
     RegisterClassEx(&wc);
 }
@@ -62,8 +65,21 @@ Window::Window(int width, int height, const char *name)
         WindowClass::GetInstance(),                                                // Instance handle
         this                                                                       // Additional application data (pointer to the Window instance)
     );
+    HICON hIcon = static_cast<HICON>(
+        LoadImage(WindowClass::GetInstance(), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+    HICON hIconSm = static_cast<HICON>(
+        LoadImage(WindowClass::GetInstance(), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+
+    if (!hIcon)
+        hIcon = hIconSm;
+
+    if (!hIconSm)
+        hIconSm = hIcon;
+
+    SendMessage(hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
+    SendMessage(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSm));
     // Show the window
-    ShowWindow(hWnd, SW_SHOWDEFAULT);
+    ShowWindow(hWnd, SW_SHOW);
 }
 
 Window::~Window() // destructor to destroy the window when the object goes out of scope
@@ -104,6 +120,21 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 {
     switch (msg)
     {
+    case WM_CREATE:
+    {
+        // Load icons
+        HICON hIcon = static_cast<HICON>(LoadImage(WindowClass::GetInstance(), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+        HICON hIconSm = static_cast<HICON>(LoadImage(WindowClass::GetInstance(), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+
+        if (!hIcon)
+            hIcon = hIconSm;
+        if (!hIconSm)
+            hIconSm = hIcon;
+
+        SendMessage(hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
+        SendMessage(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSm));
+        break;
+    }
     case WM_CLOSE:
         PostQuitMessage(0); // End message loop
         return 0;           // Prevent DefWindowProc from destroying again
