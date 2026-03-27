@@ -28,6 +28,7 @@
                 "src/Exceptions.cpp",
                 "src/WindowsMessageMap.cpp",
                 "src/Keyboard.cpp",
+                "src/Mouse.cpp",
                 "src/resources.res",
                 "-o",
                 "src/WinMain.exe",

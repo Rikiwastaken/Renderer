@@ -189,6 +189,52 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         keyboard.ClearState();
         break;
     }
+
+        // Handle mouse input
+    case WM_MOUSEMOVE:
+    {
+        POINTS pt = MAKEPOINTS(lParam);
+        mouse.OnMouseMove(pt.x, pt.y);
+        break;
+    }
+    case WM_LBUTTONDOWN:
+    {
+        POINTS pt = MAKEPOINTS(lParam);
+        mouse.OnLeftPressed(pt.x, pt.y);
+        break;
+    }
+    case WM_LBUTTONUP:
+    {
+        POINTS pt = MAKEPOINTS(lParam);
+        mouse.OnLeftReleased(pt.x, pt.y);
+        break;
+    }
+    case WM_RBUTTONDOWN:
+    {
+        POINTS pt = MAKEPOINTS(lParam);
+        mouse.OnRightPressed(pt.x, pt.y);
+        break;
+    }
+    case WM_RBUTTONUP:
+    {
+        POINTS pt = MAKEPOINTS(lParam);
+        mouse.OnRightReleased(pt.x, pt.y);
+        break;
+    }
+    case WM_MOUSEWHEEL:
+    {
+        int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+        if (delta > 0)
+        {
+            mouse.OnWheelUp(0, 0);
+        }
+        else if (delta < 0)
+        {
+            mouse.OnWheelDown(0, 0);
+        }
+        break;
+    }
+
     default:
         break;
     }

@@ -2,6 +2,7 @@
 #include "CustomWindows.h"
 #include "Exceptions.h"
 #include "Keyboard.h"
+#include "Mouse.h"
 
 class Window
 {
@@ -53,6 +54,7 @@ private:
     int height; // height of the window
 public:
     Keyboard keyboard; // instance of the keyboard class to handle keyboard input for the window
+    Mouse mouse;       // instance of the mouse class to handle mouse input for the window
 };
 
 // error exception helper macro
