@@ -1,4 +1,5 @@
 #include "Graphics.h"
+#include "Exceptions.h"
 
 Graphics::Graphics(HWND hWnd)
 {
@@ -22,26 +23,27 @@ Graphics::Graphics(HWND hWnd)
     sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;                              // Discard the back buffer contents after presenting
     sd.Flags = 0;                                                          // No additional flags
 
-    D3D11CreateDeviceAndSwapChain(
-        nullptr,                  // Adapter
-        D3D_DRIVER_TYPE_HARDWARE, // Driver Type
-        nullptr,                  // Software
-        0,                        // Flags
-        nullptr,                  // Feature Levels
-        0,                        // Feature Levels count
-        D3D11_SDK_VERSION,        // SDK Version
-        &sd,                      // Swap Chain Description (can be filled in as needed)
-        &pSwapChain,              // Swap Chain
-        &pDevice,                 // Device
-        nullptr,                  // Feature Level (optional)
-        &pDeviceContext           // Device Context
-    );
+    HRESULT hr;
+
+    GFX_THROW_FAILED(D3D11CreateDeviceAndSwapChain(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        nullptr,
+        0,
+        nullptr,
+        0,
+        D3D11_SDK_VERSION,
+        &sd,
+        &pSwapChain,
+        &pDevice,
+        nullptr,
+        &pDeviceContext));
 
     // gain access to the back buffer and create a render target view here if needed
-    ID3D11Resource *pBackBuffer = nullptr;                                                       // Pointer to the back buffer resource
-    pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void **>(&pBackBuffer)); // Get the back buffer from the swap chain
-    pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pRenderTargetView);                   // Create a render target view for the back buffer
-    pBackBuffer->Release();                                                                      // Release the back buffer resource as it's no longer needed after creating the render target view
+    ID3D11Resource *pBackBuffer = nullptr;
+    GFX_THROW_FAILED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void **>(&pBackBuffer))); // Pointer to the back buffer resource
+    GFX_THROW_FAILED(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pRenderTargetView));                   // Create a render target view for the back buffer
+    pBackBuffer->Release();                                                                                        // Release the back buffer resource as it's no longer needed after creating the render target view
 }
 
 Graphics::~Graphics()
