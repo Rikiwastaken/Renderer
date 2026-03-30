@@ -18,6 +18,9 @@ int App::Go()
 
 void App::DoFrame()
 {
+    window.GetGraphics().ClearBuffer(0.0f, 0.2f, 0.4f); // Clear the back buffer with a specified color (e.g., a shade of blue)
+    window.GetGraphics().DrawTestTriangle();            // Draw a test triangle (implementation not shown here)
+
     window.GetGraphics().EndFrame();
     // Placeholder for per-frame updates (e.g., rendering, game logic, etc.)
 }

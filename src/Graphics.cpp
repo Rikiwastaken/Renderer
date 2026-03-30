@@ -1,6 +1,8 @@
 #include "Graphics.h"
 #include "Exceptions.h"
 
+namespace wrl = Microsoft::WRL; // Alias for Microsoft::WRL namespace to simplify code
+
 Graphics::Graphics(HWND hWnd)
 {
     // Initialize Direct3D 11 here using the provided window handle (hWnd)
@@ -40,35 +42,97 @@ Graphics::Graphics(HWND hWnd)
         &pDeviceContext));
 
     // gain access to the back buffer and create a render target view here if needed
-    ID3D11Resource *pBackBuffer = nullptr;
-    GFX_THROW_FAILED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void **>(&pBackBuffer))); // Pointer to the back buffer resource
-    GFX_THROW_FAILED(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pRenderTargetView));                   // Create a render target view for the back buffer
-    pBackBuffer->Release();                                                                                        // Release the back buffer resource as it's no longer needed after creating the render target view
+    wrl::ComPtr<ID3D11Resource> pBackBuffer;
+    GFX_THROW_FAILED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));                // Pointer to the back buffer resource
+    GFX_THROW_FAILED(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pRenderTargetView)); // Create a render target view for the back buffer                                                                           // Release the back buffer resource as it's no longer needed after creating the render target view
 }
 
-Graphics::~Graphics()
+void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to clear the back buffer with a specified color
 {
-    // Clean up Direct3D resources
-    if (pDeviceContext != nullptr)
+    const float color[] = {r, g, b, 1.0f};                                 // RGBA color array
+    pDeviceContext->ClearRenderTargetView(pRenderTargetView.Get(), color); // Clear the render target view with the specified color
+}
+
+void Graphics::DrawTestTriangle()
+{
+
+    struct Vertex
     {
-        pDeviceContext->Release();
-        pDeviceContext = nullptr;
-    }
-    if (pSwapChain != nullptr)
-    {
-        pSwapChain->Release();
-        pSwapChain = nullptr;
-    }
-    if (pDevice != nullptr)
-    {
-        pDevice->Release();
-        pDevice = nullptr;
-    }
-    if (pRenderTargetView != nullptr)
-    {
-        pRenderTargetView->Release();
-        pRenderTargetView = nullptr;
-    }
+        float x, y; // Position
+    };
+
+    const Vertex vertices[] =
+        {
+            {0.0f, 0.5f},  // Top vertex
+            {0.5f, -0.5f}, // Bottom right vertex
+            {-0.5f, -0.5f} // Bottom left vertex
+        };
+
+    wrl::ComPtr<ID3D11Buffer> pVertexBuffer; // Pointer to the vertex buffer
+    D3D11_BUFFER_DESC bd = {};               // Buffer description
+    bd.Usage = D3D11_USAGE_DEFAULT;          // Default usage
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Bind as a vertex buffer
+    bd.ByteWidth = sizeof(vertices);         // Size of the buffer in bytes
+    bd.CPUAccessFlags = 0;                   // No CPU access needed
+    bd.MiscFlags = 0;                        // No miscellaneous flags
+    bd.StructureByteStride = sizeof(Vertex); // Size of each vertex structure
+    D3D11_SUBRESOURCE_DATA initData = {};    // Initial data for the buffer
+    initData.pSysMem = vertices;             // Pointer to the vertex data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
+
+    // Bind Vertex to pipeline
+    const UINT stride = sizeof(Vertex);                                                       // Size of each vertex structure
+    const UINT offset = 0;                                                                    // Offset in the vertex buffer
+    pDeviceContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset); // Set the vertex buffer to the input assembler stage
+
+    // Create pixel shader
+    wrl::ComPtr<ID3DBlob> pVSBlob;
+    wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+    GFX_THROW_FAILED(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
+    GFX_THROW_FAILED(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
+
+    // bind pixel shader to pipeline
+    pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0); // Set the pixel shader to the pipeline
+
+    // create vertex shader
+    wrl::ComPtr<ID3D11VertexShader> pVertexShader;                                                                                 // Pointer to the vertex shader
+                                                                                                                                   // Pointer to the compiled vertex shader bytecode
+    GFX_THROW_FAILED(D3DReadFileToBlob(L"VertexShader.cso", &pVSBlob));                                                            // Load the compiled vertex shader bytecode from a file
+    GFX_THROW_FAILED(pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pVertexShader)); // Create the vertex shader from the compiled bytecode
+
+    // bind vertex shader to pipeline
+    pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0); // Set the vertex shader to the pipeline
+
+    // input (vertex) layout
+    wrl::ComPtr<ID3D11InputLayout> pInputLayout;
+    const D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} // Define the input layout for the vertex shader (position attribute)
+        };
+
+    GFX_THROW_FAILED(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
+
+    // bind vertex layout to pipeline
+    pDeviceContext->IASetInputLayout(pInputLayout.Get()); // Set the input layout to the input assembler stage
+
+    // Bind Render Target View to the output merger stage
+    pDeviceContext->OMSetRenderTargets(1, pRenderTargetView.GetAddressOf(), nullptr); // Set the render target view to the output merger stage (no depth/stencil view)
+
+    // Set primitive topology
+    pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // Set the primitive topology to triangle list (each group of 3 vertices forms a triangle)
+
+    // Configure Viewport
+    D3D11_VIEWPORT vp = {};
+    vp.Width = 800.0f;                      // Set the viewport width (should match the window width)
+    vp.Height = 600.0f;                     // Set the viewport height (should match the window height)
+    vp.MinDepth = 0.0f;                     // Set the minimum depth
+    vp.MaxDepth = 1.0f;                     // Set the maximum depth
+    vp.TopLeftX = 0.0f;                     // Set the top-left X coordinate of the viewport
+    vp.TopLeftY = 0.0f;                     // Set the top-left Y coordinate of the viewport
+    pDeviceContext->RSSetViewports(1, &vp); // Set the viewport to the rasterizer stage
+
+    pDeviceContext->Draw((UINT)std::size(vertices), 0);
+    // Draw a triangle using the currently set vertex buffer and input layout (this is just a placeholder, actual implementation would require setting up vertex buffers, shaders, etc.)
 }
 
 void Graphics::EndFrame()

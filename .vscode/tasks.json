@@ -17,9 +17,45 @@
             "problemMatcher": []
         },
         {
+            "label": "Compile Vertex Shader",
+            "type": "shell",
+            "command": "${env:ProgramFiles(x86)}/Windows Kits/10/bin/10.0.26100.0/x64/fxc.exe",
+            "args": [
+                "/T",
+                "vs_5_0", // shader target, e.g., vertex shader 5.0
+                "/E",
+                "main", // entry point function in your HLSL file
+                "/Fo",
+                "VertexShader.cso",
+                "Shader/VertexShader.hlsl"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "Compile Pixel Shader",
+            "type": "shell",
+            "command": "${env:ProgramFiles(x86)}/Windows Kits/10/bin/10.0.26100.0/x64/fxc.exe",
+            "args": [
+                "/T",
+                "ps_5_0", // shader target, e.g., pixel shader 5.0
+                "/E",
+                "main", // entry point function in your HLSL file
+                "/Fo",
+                "PixelShader.cso",
+                "Shader/PixelShader.hlsl"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
             "label": "Build Renderer",
             "type": "shell",
-            "dependsOn": "Compile Resources",
+            "dependsOn": [
+                "Compile Resources",
+                "Compile Vertex Shader",
+                "Compile Pixel Shader"
+            ],
             "command": "C:/msys64/mingw64/bin/g++.exe",
             "args": [
                 "-Iinclude",
@@ -30,6 +66,7 @@
                 "-mwindows",
                 "-g",
                 "-ld3d11",
+                "-ld3dcompiler_47",
                 "-ldxgi",
                 "-lole32",
                 "-luuid"

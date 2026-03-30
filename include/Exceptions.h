@@ -6,7 +6,7 @@
 class RikiException : public std::exception
 {
 public:
-    RikiException(int line, const char *file) noexcept;
+    RikiException(int line, const char *file);
     const char *what() const noexcept override;
     virtual const char *GetType() const noexcept;
     int GetLine() const noexcept;
@@ -26,7 +26,7 @@ protected:
 class GraphicsException : public RikiException
 {
 public:
-    GraphicsException(int line, const char *file, HRESULT hr) noexcept;
+    GraphicsException(int line, const char *file, HRESULT hr);
 
     const char *what() const noexcept override;
     const char *GetType() const noexcept override;

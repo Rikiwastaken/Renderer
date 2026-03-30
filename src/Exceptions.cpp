@@ -1,7 +1,7 @@
 #include "Exceptions.h"
 #include <sstream>
 
-RikiException::RikiException(int line, const char *file) noexcept
+RikiException::RikiException(int line, const char *file)
     : line(line), file(file)
 {
 }
@@ -41,7 +41,7 @@ std::string RikiException::GetOriginString() const noexcept
 
 // ================= GRAPHICS EXCEPTION =================
 
-GraphicsException::GraphicsException(int line, const char *file, HRESULT hr) noexcept
+GraphicsException::GraphicsException(int line, const char *file, HRESULT hr)
     : RikiException(line, file), hr(hr)
 {
 }
