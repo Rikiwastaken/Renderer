@@ -25,9 +25,11 @@ int App::Go()
 
 void App::DoFrame()
 {
-    window.GetGraphics().ClearBuffer(0.0f, 0.2f, 0.4f);                                                                                                   // Clear the back buffer with a specified color (e.g., a shade of blue)
-    window.GetGraphics().DrawTestTriangle(angle, window.mouse.GetPosX() / width - 1.0f, -1.0f * (window.mouse.GetPosY() / height - 1.0f), width, height); // Draw a test triangle (implementation not shown here)
-    angle += 0.1f;                                                                                                                                        // Increment the rotation angle for the test triangle (this will cause the triangle to rotate over time)
+    window.GetGraphics().ClearBuffer(0.0f, 0.2f, 0.4f); // Clear the back buffer with a specified color (e.g., a shade of blue)
+    window.GetGraphics().DrawTestTriangle(-angle / 5, std::sin(angle), 0.0f, 4.0f + std::cos(angle), width, height);
+    window.GetGraphics().DrawTestTriangle(angle, std::sin(angle), std::cos(angle), 4.0f, width, height); // Draw a test triangle (implementation not shown here)
+
+    angle += 0.1f; // Increment the rotation angle for the test triangle (this will cause the triangle to rotate over time)
     cout << "angle: " << angle << endl;
     window.GetGraphics().EndFrame();
     // Placeholder for per-frame updates (e.g., rendering, game logic, etc.)

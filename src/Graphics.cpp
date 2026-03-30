@@ -48,38 +48,73 @@ Graphics::Graphics(HWND hWnd)
     wrl::ComPtr<ID3D11Resource> pBackBuffer;
     GFX_THROW_FAILED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));                // Pointer to the back buffer resource
     GFX_THROW_FAILED(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pRenderTargetView)); // Create a render target view for the back buffer                                                                           // Release the back buffer resource as it's no longer needed after creating the render target view
+
+    // Z Buffer
+    D3D11_DEPTH_STENCIL_DESC dsDesc = {};                                   // Depth stencil state description
+    dsDesc.DepthEnable = TRUE;                                              // Enable depth testing
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;                     // Allow writing to the depth buffer
+    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;                               // Use less comparison function for depth testing
+    wrl::ComPtr<ID3D11DepthStencilState> pDSState;                          // Pointer to the depth stencil state
+    GFX_THROW_FAILED(pDevice->CreateDepthStencilState(&dsDesc, &pDSState)); // Create the depth stencil state
+    pDeviceContext->OMSetDepthStencilState(pDSState.Get(), 1);              // Set the depth stencil state to the output merger stage (using a stencil reference value of 1)
+
+    // creeate depth stensil texture
+    wrl::ComPtr<ID3D11Texture2D> pDepthStencil;            // Pointer to the depth stencil texture
+    D3D11_TEXTURE2D_DESC depthStencilDesc = {};            // Depth stencil texture description
+    depthStencilDesc.Width = 1000.0f;                      // Set the width of the depth stencil texture (should match the window's client area width)
+    depthStencilDesc.Height = 1000.0f;                     // Set the height of the depth stencil texture (should match the window's client area height)
+    depthStencilDesc.MipLevels = 1;                        // Set the number of mipmap levels
+    depthStencilDesc.ArraySize = 1;                        // Set the size of the texture array
+    depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;       // Set the format of the depth stencil texture
+    depthStencilDesc.SampleDesc.Count = 1;                 // Set the number of samples for multisampling
+    depthStencilDesc.SampleDesc.Quality = 0;               // Set the quality level for multisampling
+    depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;          // Set the usage of the texture
+    depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL; // Set the bind flags for the depth stencil texture
+    depthStencilDesc.CPUAccessFlags = 0;                   // Set the CPU access flags
+    depthStencilDesc.MiscFlags = 0;                        // Set the miscellaneous flags
+
+    GFX_THROW_FAILED(pDevice->CreateTexture2D(&depthStencilDesc, nullptr, &pDepthStencil)); // Create the depth stencil texture
+
+    // create depth stencil view
+    D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {}; // Depth stencil view description
+    dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    dsvDesc.Texture2D.MipSlice = 0;
+    GFX_THROW_FAILED(pDevice->CreateDepthStencilView(pDepthStencil.Get(), &dsvDesc, &pDSV)); // Create a depth stencil view for the depth stencil texture
+
+    // bind depth stencil view to output merger stage
+    pDeviceContext->OMSetRenderTargets(1, pRenderTargetView.GetAddressOf(), pDSV.Get()); // Bind the render target view and depth stencil view to the output merger stage
 }
 
 void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to clear the back buffer with a specified color
 {
-    const float color[] = {r, g, b, 1.0f};                                 // RGBA color array
-    pDeviceContext->ClearRenderTargetView(pRenderTargetView.Get(), color); // Clear the render target view with the specified color
+    const float color[] = {r, g, b, 1.0f};                                         // RGBA color array
+    pDeviceContext->ClearRenderTargetView(pRenderTargetView.Get(), color);         // Clear the render target view with the specified color
+    pDeviceContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0); // Clear the depth stencil view (clearing only the depth buffer with a value of 1.0f)
 }
 
-void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth, float windowHeight)
+void Graphics::DrawTestTriangle(float angle, float x, float y, float z, float windowWidth, float windowHeight)
 {
 
     struct Vertex
     {
         struct
         {
-            float x, y; // Position
+            float x, y, z; // Position
         } pos;
-        struct
-        {
-            unsigned char r, g, b, a; // Color
-        } color;
     };
 
+    // verteces for a cube
     const Vertex vertices[] =
         {
-            {0.0f, 0.5f, 255, 0, 0, 255},
-            {0.5f, -0.5f, 0, 255, 0, 255},
-            {-0.5f, -0.5f, 0, 0, 255, 255},
-            {-0.3f, 0.3f, 0, 0, 255, 255},
-            {0.3f, 0.3f, 0, 255, 0, 255},
-            {0.0f, -0.8f, 255, 0, 0, 255},
-        };
+            {-1.0f, -1.0f, -1.0f},
+            {1.0f, -1.0f, -1.0f},
+            {-1.0f, 1.0f, -1.0f},
+            {1.0f, 1.0f, -1.0f},
+            {-1.0f, -1.0f, 1.0f},
+            {1.0f, -1.0f, 1.0f},
+            {-1.0f, 1.0f, 1.0f},
+            {1.0f, 1.0f, 1.0f}};
 
     wrl::ComPtr<ID3D11Buffer> pVertexBuffer; // Pointer to the vertex buffer
     D3D11_BUFFER_DESC bd = {};               // Buffer description
@@ -96,10 +131,13 @@ void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth
     // Create index buffer
     const unsigned short indices[] =
         {
-            0, 1, 2,
-            0, 2, 3,
-            0, 4, 1,
-            2, 1, 5};
+            0, 2, 1, 2, 3, 1, // back face
+            1, 3, 5, 3, 7, 5, // right face
+            2, 6, 3, 3, 6, 7, // front face
+            4, 5, 7, 4, 7, 6, // left face
+            0, 4, 2, 2, 4, 6, // bottom face
+            0, 1, 4, 1, 5, 4  // top face
+        };
 
     wrl::ComPtr<ID3D11Buffer> pIndexBuffer;           // Pointer to the index buffer
     D3D11_BUFFER_DESC ibd = {};                       // Buffer description for index buffer
@@ -130,8 +168,9 @@ void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth
     const ConstantBuffer cb = {
         dx::XMMatrixTranspose( // Transpose the matrix for HLSL (row-major to column-major)
             dx::XMMatrixRotationZ(angle) *
-            dx::XMMatrixScaling(3.0f / 4.0f, 1.0f, 1.0f) *
-            dx::XMMatrixTranslation(x, y, 0.0f)) // Example transformation: rotate around Z-axis and scale down;
+            dx::XMMatrixRotationY(angle) *
+            dx::XMMatrixTranslation(x, y, z) *
+            dx::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 10.0f)) // Example transformation: rotate around Z-axis and scale down;
     };
 
     wrl::ComPtr<ID3D11Buffer> pConstantBuffer;   // Pointer to the constant buffer
@@ -149,8 +188,42 @@ void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth
     // Bind constant buffer to vertex shader
     pDeviceContext->VSSetConstantBuffers(0, 1, pConstantBuffer.GetAddressOf()); // Set the constant buffer to the vertex shader stage (register b0)
 
+    struct ConstantBuffer2
+    {
+        struct
+        {
+            float r, g, b, a; // Color
+        } face_colors[6];
+    };
+
+    const ConstantBuffer2 cb2 = {
+        {
+            {1.0f, 0.0f, 0.0f, 1.0f}, // Red
+            {0.0f, 1.0f, 0.0f, 1.0f}, // Green
+            {0.0f, 0.0f, 1.0f, 1.0f}, // Blue
+            {1.0f, 1.0f, 0.0f, 1.0f}, // Yellow
+            {1.0f, 0.0f, 1.0f, 1.0f}, // Magenta
+            {0.0f, 1.0f, 1.0f, 1.0f}  // Cyan
+        }};
+
+    wrl::ComPtr<ID3D11Buffer> pConstantBuffer2;  // Pointer to the second constant buffer
+    D3D11_BUFFER_DESC cbd2 = {};                 // Buffer description for the second constant
+    cbd2.Usage = D3D11_USAGE_DEFAULT;            // Default usage
+    cbd2.BindFlags = D3D11_BIND_CONSTANT_BUFFER; // Bind as a constant buffer
+    cbd2.ByteWidth = sizeof(cb2);                // Size of the second constant buffer in bytes
+    cbd2.CPUAccessFlags = 0;                     // No CPU access needed
+    cbd2.MiscFlags = 0;                          // No miscellaneous flags
+    cbd2.StructureByteStride = 0;                // Not a structured buffer
+    D3D11_SUBRESOURCE_DATA cbData2 = {};         // Initial data for the second constant buffer
+    cbData2.pSysMem = &cb2;                      // Pointer to the second constant buffer data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd2, &cbData2, &pConstantBuffer2));
+
+    // Bind second constant buffer to pixel shader
+    pDeviceContext->PSSetConstantBuffers(0, 1, pConstantBuffer2.GetAddressOf()); // Set the second constant buffer to the pixel shader stage (register b0)
+
     // Create pixel shader
-    wrl::ComPtr<ID3DBlob> pVSBlob;
+    wrl::ComPtr<ID3DBlob>
+        pVSBlob;
     wrl::ComPtr<ID3D11PixelShader> pPixelShader;
     GFX_THROW_FAILED(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
     GFX_THROW_FAILED(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
@@ -171,8 +244,7 @@ void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth
     wrl::ComPtr<ID3D11InputLayout> pInputLayout;
     const D3D11_INPUT_ELEMENT_DESC layout[] =
         {
-            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}, // Define the input layout for the vertex shader (position attribute)
-            {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0}   // Define the input layout for the vertex shader (color attribute)
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}, // Define the input layout for the vertex shader (position attribute)
         };
 
     GFX_THROW_FAILED(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
@@ -181,7 +253,7 @@ void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth
     pDeviceContext->IASetInputLayout(pInputLayout.Get()); // Set the input layout to the input assembler stage
 
     // Bind Render Target View to the output merger stage
-    pDeviceContext->OMSetRenderTargets(1, pRenderTargetView.GetAddressOf(), nullptr); // Set the render target view to the output merger stage (no depth/stencil view)
+    pDeviceContext->OMSetRenderTargets(1, pRenderTargetView.GetAddressOf(), pDSV.Get()); // Set the render target view to the output merger stage (no depth/stencil view)
 
     // Set primitive topology
     pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // Set the primitive topology to triangle list (each group of 3 vertices forms a triangle)
