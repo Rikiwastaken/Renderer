@@ -79,7 +79,9 @@ Window::Window(int width, int height, const char *name) : width(width), height(h
     SendMessage(hWnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIcon));
     SendMessage(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSm));
     // Show the window
-    ShowWindow(hWnd, SW_SHOW);
+    ShowWindow(hWnd, SW_SHOWDEFAULT);
+    // Create the Graphics object for rendering in the window
+    pGraphics = std::make_unique<Graphics>(hWnd);
 }
 
 Window::~Window() // destructor to destroy the window when the object goes out of scope
@@ -326,4 +328,9 @@ std::optional<int> Window::ProcessMessages() noexcept
         DispatchMessage(&msg);  // Dispatch the message to the window procedure
     }
     return std::nullopt; // Return std::nullopt if there are no WM_QUIT messages, indicating that the window should continue running
+}
+
+Graphics &Window::GetGraphics()
+{
+    return *pGraphics; // Return a reference to the Graphics object associated with the window for rendering
 }

@@ -4,6 +4,8 @@
 #include "Exceptions.h"
 #include "Keyboard.h"
 #include "Mouse.h"
+#include "Graphics.h"
+#include <memory>
 
 class Window
 {
@@ -47,14 +49,16 @@ public:
     Window &operator=(const Window &) = delete;           // delete copy assignment operator to prevent copying of the window object
     void SetTitle(const std::string &title);              // function to set the title of the window
     static std::optional<int> ProcessMessages() noexcept; // static function to process Windows messages for the window and return an optional exit code if the window is closed
+    Graphics &GetGraphics();                              // function to get a reference to the Graphics object associated with the window for rendering
 private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept; // static window procedure to set up the message handling for the window
     static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept; // static window procedure to handle messages for the window after setup
     LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;                      // member function to handle messages for the window
 private:
-    HWND hWnd;  // handle to the window
-    int width;  // width of the window
-    int height; // height of the window
+    HWND hWnd;                           // handle to the window
+    int width;                           // width of the window
+    int height;                          // height of the window
+    std::unique_ptr<Graphics> pGraphics; // unique pointer to a Graphics object for rendering in the window
 public:
     Keyboard keyboard; // instance of the keyboard class to handle keyboard input for the window
     Mouse mouse;       // instance of the mouse class to handle mouse input for the window

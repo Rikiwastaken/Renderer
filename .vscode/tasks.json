@@ -23,18 +23,16 @@
             "command": "C:/msys64/mingw64/bin/g++.exe",
             "args": [
                 "-Iinclude",
-                "src/WinMain.cpp",
-                "src/Window.cpp",
-                "src/Exceptions.cpp",
-                "src/WindowsMessageMap.cpp",
-                "src/Keyboard.cpp",
-                "src/Mouse.cpp",
-                "src/App.cpp",
+                "src/*.cpp",
                 "src/resources.res",
                 "-o",
                 "src/WinMain.exe",
                 "-mwindows",
-                "-g"
+                "-g",
+                "-ld3d11",
+                "-ldxgi",
+                "-lole32",
+                "-luuid"
             ],
             "group": {
                 "kind": "build",

@@ -18,6 +18,6 @@ int App::Go()
 
 void App::DoFrame()
 {
-    window.SetTitle("Riki Engine - Frame Update" + std::to_string(rand() % 100));
+    window.GetGraphics().EndFrame();
     // Placeholder for per-frame updates (e.g., rendering, game logic, etc.)
 }
