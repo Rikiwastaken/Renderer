@@ -1,17 +1,21 @@
 {
     "configurations": [
         {
-            "name": "Win64",
+            "name": "Win64-MSVC",
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/src",
-                "C:/msys64/mingw64/include/**"
+                "${env:INCLUDE}"
             ],
-            "defines": [],
-            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "cl.exe",
             "cStandard": "c17",
             "cppStandard": "c++20",
-            "intelliSenseMode": "windows-gcc-x64"
+            "intelliSenseMode": "windows-msvc-x64"
         }
     ],
     "version": 4

@@ -7,7 +7,7 @@ struct VSOutput
 
 cbuffer CBuf
 {
-    row_major matrix transform; // Transformation matrix for vertex positions (e.g., world-view-projection matrix)
+    matrix transform; // Transformation matrix for vertex positions (e.g., world-view-projection matrix)
 };
 
 VSOutput main(float2 pos : POSITION, float3 color : COLOR)

@@ -3,17 +3,15 @@
     "configurations": [
         {
             "name": "Launch WinMain",
-            "type": "cppdbg",
+            "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/src/WinMain.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true,
-            "preLaunchTask": "Build Renderer",
-            "MIMode": "gdb",
-            "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe"
+            "externalConsole": false,
+            "console": "internalConsole",
+            "preLaunchTask": "Build Renderer"
         }
     ]
 }

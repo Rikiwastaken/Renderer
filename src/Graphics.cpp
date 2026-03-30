@@ -1,8 +1,10 @@
 #include "Graphics.h"
 #include "Exceptions.h"
 #include <cmath>
+#include <DirectXMath.h>
 
 namespace wrl = Microsoft::WRL; // Alias for Microsoft::WRL namespace to simplify code
+namespace dx = DirectX;         // Alias for DirectX namespace to simplify code
 
 Graphics::Graphics(HWND hWnd)
 {
@@ -54,7 +56,7 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to cl
     pDeviceContext->ClearRenderTargetView(pRenderTargetView.Get(), color); // Clear the render target view with the specified color
 }
 
-void Graphics::DrawTestTriangle(float angle)
+void Graphics::DrawTestTriangle(float angle, float x, float y, float windowWidth, float windowHeight)
 {
 
     struct Vertex
@@ -123,16 +125,14 @@ void Graphics::DrawTestTriangle(float angle)
 
     struct ConstantBuffer
     {
-        struct
-        {
-            float element[4][4];
-        } transformation;
+        dx::XMMATRIX transform; // Transformation matrix (e.g., world-view-projection matrix)
     };
     const ConstantBuffer cb = {
-        {std::cos(angle), std::sin(angle), 0.0f, 0.0f,
-         -std::sin(angle), std::cos(angle), 0.0f, 0.0f,
-         0.0f, 0.0f, 1.0f, 0.0f,
-         0.0f, 0.0f, 0.0f, 1.0f}};
+        dx::XMMatrixTranspose( // Transpose the matrix for HLSL (row-major to column-major)
+            dx::XMMatrixRotationZ(angle) *
+            dx::XMMatrixScaling(3.0f / 4.0f, 1.0f, 1.0f) *
+            dx::XMMatrixTranslation(x, y, 0.0f)) // Example transformation: rotate around Z-axis and scale down;
+    };
 
     wrl::ComPtr<ID3D11Buffer> pConstantBuffer;   // Pointer to the constant buffer
     D3D11_BUFFER_DESC cbd = {};                  // Buffer description for constant buffer
@@ -188,8 +188,8 @@ void Graphics::DrawTestTriangle(float angle)
 
     // Configure Viewport
     D3D11_VIEWPORT vp = {};
-    vp.Width = 800.0f;                      // Set the viewport width (should match the window width)
-    vp.Height = 600.0f;                     // Set the viewport height (should match the window height)
+    vp.Width = windowWidth;                 // Set the viewport width (should match the window width)
+    vp.Height = windowHeight;               // Set the viewport height (should match the window height)
     vp.MinDepth = 0.0f;                     // Set the minimum depth
     vp.MaxDepth = 1.0f;                     // Set the maximum depth
     vp.TopLeftX = 0.0f;                     // Set the top-left X coordinate of the viewport
