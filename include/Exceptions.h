@@ -34,6 +34,7 @@ public:
     HRESULT GetErrorCode() const noexcept;
     std::string GetErrorString() const noexcept;
     std::string GetErrorDescription() const noexcept;
+    bool IsWarning() const noexcept;
 
 private:
     HRESULT hr;

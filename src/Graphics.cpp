@@ -1,5 +1,6 @@
 #include "Graphics.h"
 #include "Exceptions.h"
+#include <cmath>
 
 namespace wrl = Microsoft::WRL; // Alias for Microsoft::WRL namespace to simplify code
 
@@ -53,19 +54,29 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to cl
     pDeviceContext->ClearRenderTargetView(pRenderTargetView.Get(), color); // Clear the render target view with the specified color
 }
 
-void Graphics::DrawTestTriangle()
+void Graphics::DrawTestTriangle(float angle)
 {
 
     struct Vertex
     {
-        float x, y; // Position
+        struct
+        {
+            float x, y; // Position
+        } pos;
+        struct
+        {
+            unsigned char r, g, b, a; // Color
+        } color;
     };
 
     const Vertex vertices[] =
         {
-            {0.0f, 0.5f},  // Top vertex
-            {0.5f, -0.5f}, // Bottom right vertex
-            {-0.5f, -0.5f} // Bottom left vertex
+            {0.0f, 0.5f, 255, 0, 0, 255},
+            {0.5f, -0.5f, 0, 255, 0, 255},
+            {-0.5f, -0.5f, 0, 0, 255, 255},
+            {-0.3f, 0.3f, 0, 0, 255, 255},
+            {0.3f, 0.3f, 0, 255, 0, 255},
+            {0.0f, -0.8f, 255, 0, 0, 255},
         };
 
     wrl::ComPtr<ID3D11Buffer> pVertexBuffer; // Pointer to the vertex buffer
@@ -80,10 +91,63 @@ void Graphics::DrawTestTriangle()
     initData.pSysMem = vertices;             // Pointer to the vertex data
     GFX_THROW_FAILED(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
 
+    // Create index buffer
+    const unsigned short indices[] =
+        {
+            0, 1, 2,
+            0, 2, 3,
+            0, 4, 1,
+            2, 1, 5};
+
+    wrl::ComPtr<ID3D11Buffer> pIndexBuffer;           // Pointer to the index buffer
+    D3D11_BUFFER_DESC ibd = {};                       // Buffer description for index buffer
+    ibd.Usage = D3D11_USAGE_DEFAULT;                  // Default usage
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;          // Bind as an index
+    ibd.ByteWidth = sizeof(indices);                  // Size of the index buffer in bytes
+    ibd.CPUAccessFlags = 0;                           // No CPU access needed
+    ibd.MiscFlags = 0;                                // No miscellaneous flags
+    ibd.StructureByteStride = sizeof(unsigned short); // Size of each index
+    D3D11_SUBRESOURCE_DATA indexData = {};            // Initial data for the index
+    indexData.pSysMem = indices;                      // Pointer to the index data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&ibd, &indexData, &pIndexBuffer));
+
+    // Bind Index Buffer to pipeline
+    pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0); // Set the index buffer to the input assembler stage (using 16-bit unsigned integers for indices)
+
     // Bind Vertex to pipeline
     const UINT stride = sizeof(Vertex);                                                       // Size of each vertex structure
     const UINT offset = 0;                                                                    // Offset in the vertex buffer
     pDeviceContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset); // Set the vertex buffer to the input assembler stage
+
+    // Create constant buffer for transformation matrices (e.g., world-view-projection matrix)
+
+    struct ConstantBuffer
+    {
+        struct
+        {
+            float element[4][4];
+        } transformation;
+    };
+    const ConstantBuffer cb = {
+        {std::cos(angle), std::sin(angle), 0.0f, 0.0f,
+         -std::sin(angle), std::cos(angle), 0.0f, 0.0f,
+         0.0f, 0.0f, 1.0f, 0.0f,
+         0.0f, 0.0f, 0.0f, 1.0f}};
+
+    wrl::ComPtr<ID3D11Buffer> pConstantBuffer;   // Pointer to the constant buffer
+    D3D11_BUFFER_DESC cbd = {};                  // Buffer description for constant buffer
+    cbd.Usage = D3D11_USAGE_DYNAMIC;             // Default usage
+    cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;  // Bind as a constant buffer
+    cbd.ByteWidth = sizeof(ConstantBuffer);      // Size of the constant buffer in bytes
+    cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // Allow CPU to update the buffer
+    cbd.MiscFlags = 0;                           // No miscellaneous flags
+    cbd.StructureByteStride = 0;                 // Not a structured buffer
+    D3D11_SUBRESOURCE_DATA cbData = {};          // Initial data for the constant buffer
+    cbData.pSysMem = &cb;                        // Pointer to the constant buffer data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd, &cbData, &pConstantBuffer));
+
+    // Bind constant buffer to vertex shader
+    pDeviceContext->VSSetConstantBuffers(0, 1, pConstantBuffer.GetAddressOf()); // Set the constant buffer to the vertex shader stage (register b0)
 
     // Create pixel shader
     wrl::ComPtr<ID3DBlob> pVSBlob;
@@ -107,7 +171,8 @@ void Graphics::DrawTestTriangle()
     wrl::ComPtr<ID3D11InputLayout> pInputLayout;
     const D3D11_INPUT_ELEMENT_DESC layout[] =
         {
-            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0} // Define the input layout for the vertex shader (position attribute)
+            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}, // Define the input layout for the vertex shader (position attribute)
+            {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0}   // Define the input layout for the vertex shader (color attribute)
         };
 
     GFX_THROW_FAILED(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
@@ -131,8 +196,8 @@ void Graphics::DrawTestTriangle()
     vp.TopLeftY = 0.0f;                     // Set the top-left Y coordinate of the viewport
     pDeviceContext->RSSetViewports(1, &vp); // Set the viewport to the rasterizer stage
 
-    pDeviceContext->Draw((UINT)std::size(vertices), 0);
-    // Draw a triangle using the currently set vertex buffer and input layout (this is just a placeholder, actual implementation would require setting up vertex buffers, shaders, etc.)
+    pDeviceContext->DrawIndexed((UINT)std::size(indices), 0, 0);
+    // Draw indexed triangles using the currently set vertex buffer and index buffer (this is just a placeholder, actual implementation would require setting up vertex buffers, index buffers, shaders, etc.)
 }
 
 void Graphics::EndFrame()
