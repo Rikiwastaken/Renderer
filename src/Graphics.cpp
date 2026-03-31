@@ -93,7 +93,7 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to cl
     pDeviceContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0); // Clear the depth stencil view (clearing only the depth buffer with a value of 1.0f)
 }
 
-void Graphics::DrawTestTriangle(float angle, float x, float y, float z, float windowWidth, float windowHeight)
+void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight)
 {
 
     struct Vertex
@@ -167,6 +167,7 @@ void Graphics::DrawTestTriangle(float angle, float x, float y, float z, float wi
     };
     const ConstantBuffer cb = {
         dx::XMMatrixTranspose( // Transpose the matrix for HLSL (row-major to column-major)
+            dx::XMMatrixScaling(scale, scale, scale) *
             dx::XMMatrixRotationZ(angle) *
             dx::XMMatrixRotationY(angle) *
             dx::XMMatrixTranslation(x, y, z) *

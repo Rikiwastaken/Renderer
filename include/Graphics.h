@@ -11,9 +11,9 @@ public:
     Graphics(const Graphics &) = delete;            // Delete copy constructor
     Graphics &operator=(const Graphics &) = delete; // Delete copy assignment operator
     ~Graphics() = default;
-    void EndFrame();                                                                                      // Function to present the back buffer to the screen
-    void ClearBuffer(float r, float g, float b) noexcept;                                                 // Function to clear the back buffer with a specified color
-    void DrawTestTriangle(float angle, float x, float y, float z, float windowWidth, float windowHeight); // Function to draw a test triangle (implementation not shown here)
+    void EndFrame();                                                                                               // Function to present the back buffer to the screen
+    void ClearBuffer(float r, float g, float b) noexcept;                                                          // Function to clear the back buffer with a specified color
+    void DrawTestCube(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight); // Function to draw a test triangle (implementation not shown here)
 
 private:
     Microsoft::WRL::ComPtr<ID3D11Device> pDevice;                     // Pointer to the Direct3D device
