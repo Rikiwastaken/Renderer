@@ -13,7 +13,8 @@ public:
     ~Graphics() = default;
     void EndFrame();                                                                                               // Function to present the back buffer to the screen
     void ClearBuffer(float r, float g, float b) noexcept;                                                          // Function to clear the back buffer with a specified color
-    void DrawTestCube(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight); // Function to draw a test triangle (implementation not shown here)
+    void DrawTestCube(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight); // Function to draw a test triangle
+    void DrawD10(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight);
 
 private:
     Microsoft::WRL::ComPtr<ID3D11Device> pDevice;                     // Pointer to the Direct3D device

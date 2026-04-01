@@ -2,6 +2,7 @@
 #include "Exceptions.h"
 #include <cmath>
 #include <DirectXMath.h>
+#include <vector>
 
 namespace wrl = Microsoft::WRL; // Alias for Microsoft::WRL namespace to simplify code
 namespace dx = DirectX;         // Alias for DirectX namespace to simplify code
@@ -61,8 +62,8 @@ Graphics::Graphics(HWND hWnd)
     // creeate depth stensil texture
     wrl::ComPtr<ID3D11Texture2D> pDepthStencil;            // Pointer to the depth stencil texture
     D3D11_TEXTURE2D_DESC depthStencilDesc = {};            // Depth stencil texture description
-    depthStencilDesc.Width = 1000.0f;                      // Set the width of the depth stencil texture (should match the window's client area width)
-    depthStencilDesc.Height = 1000.0f;                     // Set the height of the depth stencil texture (should match the window's client area height)
+    depthStencilDesc.Width = 800.0f;                       // Set the width of the depth stencil texture (should match the window's client area width)
+    depthStencilDesc.Height = 600.0f;                      // Set the height of the depth stencil texture (should match the window's client area height)
     depthStencilDesc.MipLevels = 1;                        // Set the number of mipmap levels
     depthStencilDesc.ArraySize = 1;                        // Set the size of the texture array
     depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;       // Set the format of the depth stencil texture
@@ -271,6 +272,207 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
 
     pDeviceContext->DrawIndexed((UINT)std::size(indices), 0, 0);
     // Draw indexed triangles using the currently set vertex buffer and index buffer (this is just a placeholder, actual implementation would require setting up vertex buffers, index buffers, shaders, etc.)
+}
+
+void Graphics::DrawD10(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight)
+{
+    struct Vertex
+    {
+        struct
+        {
+            float x, y, z; // Position
+        } pos;
+    };
+
+    const float PI = 3.1415926535f;
+
+    Vertex vertices[7]; // Array to hold the vertices of the D10 (trapezohedron)
+
+    // verteces for a cube
+    // Top pole
+    vertices[0] = {0.0f, 1.0f, 0.0f};
+
+    // Bottom pole
+    vertices[1] = {0.0f, -1.0f, 0.0f};
+
+    // Ring vertices (5 points)
+    for (int i = 0; i < 5; i++)
+    {
+        float angle = i * 2.0f * PI / 5.0f; // 72 degrees per vertex
+
+        float x = cosf(angle);
+        float z = sinf(angle);
+
+        vertices[i + 2] = {x, 0.0f, z};
+    }
+
+    wrl::ComPtr<ID3D11Buffer> pVertexBuffer; // Pointer to the vertex buffer
+    D3D11_BUFFER_DESC bd = {};               // Buffer description
+    bd.Usage = D3D11_USAGE_DEFAULT;          // Default usage
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER; // Bind as a vertex buffer
+    bd.ByteWidth = sizeof(vertices);         // Size of the buffer in bytes
+    bd.CPUAccessFlags = 0;                   // No CPU access needed
+    bd.MiscFlags = 0;                        // No miscellaneous flags
+    bd.StructureByteStride = sizeof(Vertex); // Size of each vertex structure
+    D3D11_SUBRESOURCE_DATA initData = {};    // Initial data for the buffer
+    initData.pSysMem = vertices;             // Pointer to the vertex data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
+
+    unsigned short indices[60]; // Array to hold the indices of the D10 (trapezohedron)
+    int indexCount = 0;
+
+    for (int i = 0; i < 5; i++)
+    {
+        int next = (i + 1) % 5;
+
+        indices[indexCount++] = 0; // top pole
+        indices[indexCount++] = 2 + i;
+        indices[indexCount++] = 2 + next;
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        int next = (i + 1) % 5;
+
+        indices[indexCount++] = 1; // bottom pole
+        indices[indexCount++] = 2 + next;
+        indices[indexCount++] = 2 + i;
+    }
+
+    wrl::ComPtr<ID3D11Buffer> pIndexBuffer;           // Pointer to the index buffer
+    D3D11_BUFFER_DESC ibd = {};                       // Buffer description for index buffer
+    ibd.Usage = D3D11_USAGE_DEFAULT;                  // Default usage
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;          // Bind as an index
+    ibd.ByteWidth = sizeof(indices);                  // Size of the index buffer in bytes
+    ibd.CPUAccessFlags = 0;                           // No CPU access needed
+    ibd.MiscFlags = 0;                                // No miscellaneous flags
+    ibd.StructureByteStride = sizeof(unsigned short); // Size of each index
+    D3D11_SUBRESOURCE_DATA indexData = {};            // Initial data for the index
+    indexData.pSysMem = indices;                      // Pointer to the index data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&ibd, &indexData, &pIndexBuffer));
+
+    // Bind Index Buffer to pipeline
+    pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0); // Set the index buffer to the input assembler stage (using 16-bit unsigned integers for indices)
+
+    // Bind Vertex to pipeline
+    const UINT stride = sizeof(Vertex);                                                       // Size of each vertex structure
+    const UINT offset = 0;                                                                    // Offset in the vertex buffer
+    pDeviceContext->IASetVertexBuffers(0, 1, pVertexBuffer.GetAddressOf(), &stride, &offset); // Set the vertex buffer to the input assembler stage
+
+    // Create constant buffer for transformation matrices (e.g., world-view-projection matrix)
+
+    struct ConstantBuffer
+    {
+        dx::XMMATRIX transform; // Transformation matrix (e.g., world-view-projection matrix)
+    };
+    const ConstantBuffer cb = {
+        dx::XMMatrixTranspose( // Transpose the matrix for HLSL (row-major to column-major)
+            dx::XMMatrixScaling(scale, scale, scale) *
+            dx::XMMatrixRotationZ(angle) *
+            dx::XMMatrixRotationY(angle) *
+            dx::XMMatrixTranslation(x, y, z) *
+            dx::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 10.0f))};
+
+    wrl::ComPtr<ID3D11Buffer> pConstantBuffer;   // Pointer to the constant buffer
+    D3D11_BUFFER_DESC cbd = {};                  // Buffer description for constant buffer
+    cbd.Usage = D3D11_USAGE_DYNAMIC;             // Default usage
+    cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;  // Bind as a constant buffer
+    cbd.ByteWidth = sizeof(ConstantBuffer);      // Size of the constant buffer in bytes
+    cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // Allow CPU to update the buffer
+    cbd.MiscFlags = 0;                           // No miscellaneous flags
+    cbd.StructureByteStride = 0;                 // Not a structured buffer
+    D3D11_SUBRESOURCE_DATA cbData = {};          // Initial data for the constant buffer
+    cbData.pSysMem = &cb;                        // Pointer to the constant buffer data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd, &cbData, &pConstantBuffer));
+
+    // Bind constant buffer to vertex shader
+    pDeviceContext->VSSetConstantBuffers(0, 1, pConstantBuffer.GetAddressOf()); // Set the constant buffer to the vertex shader stage (register b0)
+
+    struct ConstantBuffer2
+    {
+        struct
+        {
+            float r, g, b, a; // Color
+        } face_colors[10];
+    };
+
+    const ConstantBuffer2 cb2 = {
+        {
+            {1.0f, 0.0f, 0.0f, 1.0f}, // Red
+            {0.0f, 1.0f, 0.0f, 1.0f}, // Green
+            {0.0f, 0.0f, 1.0f, 1.0f}, // Blue
+            {1.0f, 1.0f, 0.0f, 1.0f}, // Yellow
+            {1.0f, 0.0f, 1.0f, 1.0f}, // Magenta
+            {0.0f, 1.0f, 1.0f, 1.0f}, // Cyan
+            {1.0f, 0.5f, 0.0f, 1.0f}, // Orange
+            {0.5f, 0.0f, 1.0f, 1.0f}, // Purple
+            {0.5f, 0.5f, 0.5f, 1.0f}, // Gray
+            {1.0f, 1.0f, 1.0f, 1.0f}  // White
+        }};
+
+    wrl::ComPtr<ID3D11Buffer> pConstantBuffer2;  // Pointer to the second constant buffer
+    D3D11_BUFFER_DESC cbd2 = {};                 // Buffer description for the second constant
+    cbd2.Usage = D3D11_USAGE_DEFAULT;            // Default usage
+    cbd2.BindFlags = D3D11_BIND_CONSTANT_BUFFER; // Bind as a constant buffer
+    cbd2.ByteWidth = sizeof(cb2);                // Size of the second constant buffer in bytes
+    cbd2.CPUAccessFlags = 0;                     // No CPU access needed
+    cbd2.MiscFlags = 0;                          // No miscellaneous flags
+    cbd2.StructureByteStride = 0;                // Not a structured buffer
+    D3D11_SUBRESOURCE_DATA cbData2 = {};         // Initial data for the second constant buffer
+    cbData2.pSysMem = &cb2;                      // Pointer to the second constant buffer data
+    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd2, &cbData2, &pConstantBuffer2));
+
+    // Bind second constant buffer to pixel shader
+    pDeviceContext->PSSetConstantBuffers(0, 1, pConstantBuffer2.GetAddressOf()); // Set the second constant buffer to the pixel shader stage (register b0)
+
+    // Create pixel shader
+    wrl::ComPtr<ID3DBlob>
+        pVSBlob;
+    wrl::ComPtr<ID3D11PixelShader> pPixelShader;
+    GFX_THROW_FAILED(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
+    GFX_THROW_FAILED(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
+
+    // bind pixel shader to pipeline
+    pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0); // Set the pixel shader to the pipeline
+
+    // create vertex shader
+    wrl::ComPtr<ID3D11VertexShader> pVertexShader;                                                                                 // Pointer to the vertex shader
+                                                                                                                                   // Pointer to the compiled vertex shader bytecode
+    GFX_THROW_FAILED(D3DReadFileToBlob(L"VertexShader.cso", &pVSBlob));                                                            // Load the compiled vertex shader bytecode from a file
+    GFX_THROW_FAILED(pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pVertexShader)); // Create the vertex shader from the compiled bytecode
+
+    // bind vertex shader to pipeline
+    pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0); // Set the vertex shader to the pipeline
+
+    // input (vertex) layout
+    wrl::ComPtr<ID3D11InputLayout> pInputLayout;
+    const D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}, // Define the input layout for the vertex shader (position attribute)
+        };
+
+    GFX_THROW_FAILED(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
+
+    // bind vertex layout to pipeline
+    pDeviceContext->IASetInputLayout(pInputLayout.Get()); // Set the input layout to the input assembler stage
+
+    // Bind Render Target View to the output merger stage
+    pDeviceContext->OMSetRenderTargets(1, pRenderTargetView.GetAddressOf(), pDSV.Get()); // Set the render target view to the output merger stage (no depth/stencil view)
+
+    // Set primitive topology
+    pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // Set the primitive topology to triangle list (each group of 3 vertices forms a triangle)
+
+    // Configure Viewport
+    D3D11_VIEWPORT vp = {};
+    vp.Width = windowWidth;                 // Set the viewport width (should match the window width)
+    vp.Height = windowHeight;               // Set the viewport height (should match the window height)
+    vp.MinDepth = 0.0f;                     // Set the minimum depth
+    vp.MaxDepth = 1.0f;                     // Set the maximum depth
+    vp.TopLeftX = 0.0f;                     // Set the top-left X coordinate of the viewport
+    vp.TopLeftY = 0.0f;                     // Set the top-left Y coordinate of the viewport
+    pDeviceContext->RSSetViewports(1, &vp); // Set the viewport to the rasterizer stage
+
+    pDeviceContext->DrawIndexed((UINT)std::size(indices), 0, 0);
 }
 
 void Graphics::EndFrame()

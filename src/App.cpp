@@ -5,8 +5,8 @@ using namespace std;
 
 float angle = 0.0f; //   Global variable to track the rotation angle for the test triangle (used in DrawTestTriangle function)
 
-float width = 1000.0f;  // Global variable to track the width of the window (used in DrawTestTriangle function)
-float height = 1000.0f; // Global variable to track the height of the window (used in DrawTestTriangle function)
+float width = 800.0f;  // Global variable to track the width of the window (used in DrawTestTriangle function)
+float height = 600.0f; // Global variable to track the height of the window (used in DrawTestTriangle function)
 bool goingright = true;
 bool goingup = true;
 bool goingforward = true;
@@ -93,7 +93,8 @@ void App::DoFrame()
         currentz -= moveperframe;
     }
 
-    window.GetGraphics().DrawTestCube(angle / 5, currentx, currenty, 1, 0.1f, width, height);
+    // window.GetGraphics().DrawTestCube(angle / 5, currentx, currenty, 1, 0.1f, width, height);
+    window.GetGraphics().DrawD10(angle / 10, currentx, currenty, 1, 0.1f, width, height);
 
     window.GetGraphics().EndFrame();
 }
