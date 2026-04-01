@@ -1,7 +1,7 @@
 #include "Window.h"
 #include <iostream>
 #include <sstream>
-#include "WindowsThrowMacros.h"
+
 #include "Resource.h"
 
 Window::WindowClass Window::WindowClass::wndClass; // Define the static instance of the WindowClass
@@ -48,11 +48,14 @@ Window::Window(int width, int height, const char *name) : width(width), height(h
 {
     // Calculate the size of the window rectangle based on the desired client area size
     RECT wr;
-    wr.left = 0;
-    wr.top = 0;
-    wr.right = width;
-    wr.bottom = height;
-    AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE); // Adjust the window rectangle to account for the non-client area (title bar, borders, etc.)
+    wr.left = 100;
+    wr.right = width + wr.left;
+    wr.top = 100;
+    wr.bottom = height + wr.top;
+    if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE) == 0)
+    {
+        throw CHWND_LAST_EXCEPT();
+    } // Adjust the window rectangle to account for the non-client area (title bar, borders, etc.)
     // Create the window with the adjusted size and specified name
     hWnd = CreateWindowEx( // Optional window styles
         0,
@@ -258,23 +261,24 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 }
 
 // Window Exception
-Window::Exception::Exception(int line, const char *file, HRESULT hr) noexcept
-    : RikiException(line, file), hr(hr)
+Window::HrException::HrException(int line, const char *file, HRESULT hr) noexcept
+    : Exception(line, file), hr(hr)
 {
 }
 
-const char *Window::Exception::what() const noexcept
+const char *Window::HrException::what() const noexcept
 {
-    std::ostringstream oss; // Create a string stream to build the what() message
+    std::ostringstream oss;
     oss << GetType() << std::endl
-        << GetOriginString() << std::endl
-        << "[Error Code] " << GetErrorCode() << std::endl
-        << "[Description] " << GetErrorString(); // Append the type of the exception, origin string, error code, and error description to the string stream
+        << "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode()
+        << std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl
+        << "[Description] " << GetErrorDescription() << std::endl
+        << GetOriginString();
     whatBuffer = oss.str();
     return whatBuffer.c_str();
 }
 
-const char *Window::Exception::GetType() const noexcept
+const char *Window::HrException::GetType() const noexcept
 {
     return "Window Exception";
 }
@@ -282,15 +286,11 @@ const char *Window::Exception::GetType() const noexcept
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
     char *pMsgBuf = nullptr;
-    DWORD nMsgLen = FormatMessageA(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, // Flags to specify how the message should be formatted
-        nullptr,                                                                                     // Source of the message (nullptr for system messages)
-        hr,                                                                                          // The error code to translate
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),                                                   // Language for the message
-        reinterpret_cast<char *>(&pMsgBuf),                                                          // Buffer to receive the formatted message
-        0,                                                                                           // Size of the buffer (0 for automatic allocation)
-        nullptr                                                                                      // Arguments for the message (not used here)
-    );
+    const DWORD nMsgLen = FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr);
     if (nMsgLen == 0) // If FormatMessage fails, return a default error message
     {
         return "Unidentified error code";
@@ -300,14 +300,14 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
     return errorString;               // Return the translated error string
 }
 
-HRESULT Window::Exception::GetErrorCode() const noexcept
+HRESULT Window::HrException::GetErrorCode() const noexcept
 {
     return hr; // Return the HRESULT error code associated with the exception
 }
 
-std::string Window::Exception::GetErrorString() const noexcept
+std::string Window::HrException::GetErrorDescription() const noexcept
 {
-    return TranslateErrorCode(hr); // Return a string representation of the error associated with the HRESULT error code
+    return Exception::TranslateErrorCode(hr);
 }
 
 void Window::SetTitle(const std::string &title)
@@ -332,5 +332,14 @@ std::optional<int> Window::ProcessMessages() noexcept
 
 Graphics &Window::GetGraphics()
 {
+    if (!pGraphics)
+    {
+        throw CHWND_NOGFX_EXCEPT();
+    }
     return *pGraphics; // Return a reference to the Graphics object associated with the window for rendering
+}
+
+const char *Window::NoGfxException::GetType() const noexcept
+{
+    return " Window Exception [No Graphics]";
 }

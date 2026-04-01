@@ -20,32 +20,3 @@ private:
 protected:
     mutable std::string whatBuffer;
 };
-
-// ================= GRAPHICS EXCEPTION =================
-
-class GraphicsException : public RikiException
-{
-public:
-    GraphicsException(int line, const char *file, HRESULT hr);
-
-    const char *what() const noexcept override;
-    const char *GetType() const noexcept override;
-
-    HRESULT GetErrorCode() const noexcept;
-    std::string GetErrorString() const noexcept;
-    std::string GetErrorDescription() const noexcept;
-    bool IsWarning() const noexcept;
-
-private:
-    HRESULT hr;
-};
-
-// ================= HELPER MACRO =================
-
-// Use this for DirectX calls
-#define GFX_THROW_FAILED(hrcall)                             \
-    {                                                        \
-        HRESULT hr;                                          \
-        if (FAILED(hr = (hrcall)))                           \
-            throw GraphicsException(__LINE__, __FILE__, hr); \
-    }

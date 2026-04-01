@@ -14,18 +14,29 @@ class Window
 public:
     class Exception : public RikiException
     {
+        using RikiException::RikiException;
+
     public:
-        Exception(int line, const char *file, HRESULT hr) noexcept; // constructor to create an exception with the specified line number, file name, and HRESULT error code
-        const char *what() const noexcept override;                 // override the what() function from RikiException to provide a description of the exception
-        virtual const char *GetType() const noexcept override;      // override the GetType() function from RikiException to return the type of the exception
-        static std::string TranslateErrorCode(HRESULT hr) noexcept; // static function to translate an HRESULT error code into a human-readable string
-        HRESULT GetErrorCode() const noexcept;                      // function to get the HRESULT error code associated with the exception
-        std::string GetErrorString() const noexcept;                // function to get a string representation of the error associated with the HRESULT error code
+        static std::string TranslateErrorCode(HRESULT hr) noexcept;
+    };
+    class HrException : public Exception
+    {
+    public:
+        HrException(int line, const char *file, HRESULT hr) noexcept;
+        const char *what() const noexcept override;
+        const char *GetType() const noexcept override;
+        HRESULT GetErrorCode() const noexcept;
+        std::string GetErrorDescription() const noexcept;
 
     private:
         HRESULT hr;
     };
-    using HrException = Exception;
+    class NoGfxException : public Exception
+    {
+    public:
+        using Exception::Exception;
+        const char *GetType() const noexcept override;
+    };
 
 private:
     // singleton manage regirstation and cleanup of the window class

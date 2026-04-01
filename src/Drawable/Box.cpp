@@ -21,7 +21,9 @@ Box::Box(Graphics &gfx, std::mt19937 &rng,
     {
         struct
         {
-            float x, y, z; // Position
+            float x;
+            float y;
+            float z;
         } pos;
     };
     const std::vector<Vertex> vertices =
@@ -58,17 +60,17 @@ Box::Box(Graphics &gfx, std::mt19937 &rng,
             float r;
             float g;
             float b;
-            float a;
+            float a = 1.0f;
         } face_colors[6];
     };
     const ConstantBuffer2 cb2 = {
         {
-            {1.0f, 0.0f, 0.0f, 1.0f}, // Red
-            {0.0f, 1.0f, 0.0f, 1.0f}, // Green
-            {0.0f, 0.0f, 1.0f, 1.0f}, // Blue
-            {1.0f, 1.0f, 0.0f, 1.0f}, // Yellow
-            {1.0f, 0.0f, 1.0f, 1.0f}, // Magenta
-            {0.0f, 1.0f, 1.0f, 1.0f}  // Cyan
+            {1.0f, 0.0f, 0.0f}, // Red
+            {0.0f, 1.0f, 0.0f}, // Green
+            {0.0f, 0.0f, 1.0f}, // Blue
+            {1.0f, 1.0f, 0.0f}, // Yellow
+            {1.0f, 0.0f, 1.0f}, // Magenta
+            {0.0f, 1.0f, 1.0f}  // Cyan
         }};
     AddBind(std::make_unique<PixelConstantBuffer<ConstantBuffer2>>(gfx, cb2));
 
@@ -94,5 +96,8 @@ void Box::Update(float dt) noexcept
 
 DirectX::XMMATRIX Box::GetTransformXM() const noexcept
 {
-    return DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) * DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) * DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f);
+    return DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+           DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+           DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+           DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f);
 }

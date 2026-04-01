@@ -7,7 +7,7 @@ IndexBuffer::IndexBuffer(Graphics &gfx, const std::vector<unsigned short> &indic
     D3D11_BUFFER_DESC ibd = {};                       // Buffer description for index buffer
     ibd.Usage = D3D11_USAGE_DEFAULT;                  // Default usage
     ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;          // Bind as an index
-    ibd.ByteWidth = sizeof(indices);                  // Size of the index buffer in bytes
+    ibd.ByteWidth = sizeof(unsigned short) * count;   // Size of the index buffer in bytes
     ibd.CPUAccessFlags = 0;                           // No CPU access needed
     ibd.MiscFlags = 0;                                // No miscellaneous flags
     ibd.StructureByteStride = sizeof(unsigned short); // Size of each index

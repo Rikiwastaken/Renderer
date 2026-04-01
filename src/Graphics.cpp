@@ -32,7 +32,7 @@ Graphics::Graphics(HWND hWnd)
 
     HRESULT hr;
 
-    GFX_THROW_FAILED(D3D11CreateDeviceAndSwapChain(
+    GFX_THROW_INFO_ONLY(D3D11CreateDeviceAndSwapChain(
         nullptr,
         D3D_DRIVER_TYPE_HARDWARE,
         nullptr,
@@ -48,17 +48,17 @@ Graphics::Graphics(HWND hWnd)
 
     // gain access to the back buffer and create a render target view here if needed
     wrl::ComPtr<ID3D11Resource> pBackBuffer;
-    GFX_THROW_FAILED(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));                // Pointer to the back buffer resource
-    GFX_THROW_FAILED(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pRenderTargetView)); // Create a render target view for the back buffer                                                                           // Release the back buffer resource as it's no longer needed after creating the render target view
+    GFX_THROW_INFO_ONLY(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));                // Pointer to the back buffer resource
+    GFX_THROW_INFO_ONLY(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pRenderTargetView)); // Create a render target view for the back buffer                                                                           // Release the back buffer resource as it's no longer needed after creating the render target view
 
     // Z Buffer
-    D3D11_DEPTH_STENCIL_DESC dsDesc = {};                                   // Depth stencil state description
-    dsDesc.DepthEnable = TRUE;                                              // Enable depth testing
-    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;                     // Allow writing to the depth buffer
-    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;                               // Use less comparison function for depth testing
-    wrl::ComPtr<ID3D11DepthStencilState> pDSState;                          // Pointer to the depth stencil state
-    GFX_THROW_FAILED(pDevice->CreateDepthStencilState(&dsDesc, &pDSState)); // Create the depth stencil state
-    pDeviceContext->OMSetDepthStencilState(pDSState.Get(), 1);              // Set the depth stencil state to the output merger stage (using a stencil reference value of 1)
+    D3D11_DEPTH_STENCIL_DESC dsDesc = {};                                      // Depth stencil state description
+    dsDesc.DepthEnable = TRUE;                                                 // Enable depth testing
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;                        // Allow writing to the depth buffer
+    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;                                  // Use less comparison function for depth testing
+    wrl::ComPtr<ID3D11DepthStencilState> pDSState;                             // Pointer to the depth stencil state
+    GFX_THROW_INFO_ONLY(pDevice->CreateDepthStencilState(&dsDesc, &pDSState)); // Create the depth stencil state
+    pDeviceContext->OMSetDepthStencilState(pDSState.Get(), 1);                 // Set the depth stencil state to the output merger stage (using a stencil reference value of 1)
 
     // creeate depth stensil texture
     wrl::ComPtr<ID3D11Texture2D> pDepthStencil;            // Pointer to the depth stencil texture
@@ -75,17 +75,35 @@ Graphics::Graphics(HWND hWnd)
     depthStencilDesc.CPUAccessFlags = 0;                   // Set the CPU access flags
     depthStencilDesc.MiscFlags = 0;                        // Set the miscellaneous flags
 
-    GFX_THROW_FAILED(pDevice->CreateTexture2D(&depthStencilDesc, nullptr, &pDepthStencil)); // Create the depth stencil texture
+    GFX_THROW_INFO_ONLY(pDevice->CreateTexture2D(&depthStencilDesc, nullptr, &pDepthStencil)); // Create the depth stencil texture
 
     // create depth stencil view
     D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {}; // Depth stencil view description
     dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
     dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     dsvDesc.Texture2D.MipSlice = 0;
-    GFX_THROW_FAILED(pDevice->CreateDepthStencilView(pDepthStencil.Get(), &dsvDesc, &pDSV)); // Create a depth stencil view for the depth stencil texture
+    GFX_THROW_INFO_ONLY(pDevice->CreateDepthStencilView(pDepthStencil.Get(), &dsvDesc, &pDSV)); // Create a depth stencil view for the depth stencil texture
 
     // bind depth stencil view to output merger stage
     pDeviceContext->OMSetRenderTargets(1, pRenderTargetView.GetAddressOf(), pDSV.Get()); // Bind the render target view and depth stencil view to the output merger stage
+
+    D3D11_RASTERIZER_DESC rasterDesc = {};
+    rasterDesc.FillMode = D3D11_FILL_SOLID;
+    rasterDesc.CullMode = D3D11_CULL_NONE;
+    rasterDesc.DepthClipEnable = TRUE;
+    GFX_THROW_INFO_ONLY(pDevice->CreateRasterizerState(&rasterDesc, &pRasterizerState));
+    pDeviceContext->RSSetState(pRasterizerState.Get());
+
+    RECT clientRect;
+    GetClientRect(hWnd, &clientRect);
+    D3D11_VIEWPORT vp = {};
+    vp.Width = static_cast<float>(clientRect.right - clientRect.left);
+    vp.Height = static_cast<float>(clientRect.bottom - clientRect.top);
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    pDeviceContext->RSSetViewports(1, &vp);
 }
 
 void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to clear the back buffer with a specified color
@@ -128,7 +146,7 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
     bd.StructureByteStride = sizeof(Vertex); // Size of each vertex structure
     D3D11_SUBRESOURCE_DATA initData = {};    // Initial data for the buffer
     initData.pSysMem = vertices;             // Pointer to the vertex data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
 
     // Create index buffer
     const unsigned short indices[] =
@@ -151,7 +169,7 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
     ibd.StructureByteStride = sizeof(unsigned short); // Size of each index
     D3D11_SUBRESOURCE_DATA indexData = {};            // Initial data for the index
     indexData.pSysMem = indices;                      // Pointer to the index data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&ibd, &indexData, &pIndexBuffer));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&ibd, &indexData, &pIndexBuffer));
 
     // Bind Index Buffer to pipeline
     pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0); // Set the index buffer to the input assembler stage (using 16-bit unsigned integers for indices)
@@ -186,7 +204,7 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
     cbd.StructureByteStride = 0;                 // Not a structured buffer
     D3D11_SUBRESOURCE_DATA cbData = {};          // Initial data for the constant buffer
     cbData.pSysMem = &cb;                        // Pointer to the constant buffer data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd, &cbData, &pConstantBuffer));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&cbd, &cbData, &pConstantBuffer));
 
     // Bind constant buffer to vertex shader
     pDeviceContext->VSSetConstantBuffers(0, 1, pConstantBuffer.GetAddressOf()); // Set the constant buffer to the vertex shader stage (register b0)
@@ -219,7 +237,7 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
     cbd2.StructureByteStride = 0;                // Not a structured buffer
     D3D11_SUBRESOURCE_DATA cbData2 = {};         // Initial data for the second constant buffer
     cbData2.pSysMem = &cb2;                      // Pointer to the second constant buffer data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd2, &cbData2, &pConstantBuffer2));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&cbd2, &cbData2, &pConstantBuffer2));
 
     // Bind second constant buffer to pixel shader
     pDeviceContext->PSSetConstantBuffers(0, 1, pConstantBuffer2.GetAddressOf()); // Set the second constant buffer to the pixel shader stage (register b0)
@@ -228,17 +246,17 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
     wrl::ComPtr<ID3DBlob>
         pVSBlob;
     wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-    GFX_THROW_FAILED(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
-    GFX_THROW_FAILED(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
+    GFX_THROW_INFO_ONLY(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
+    GFX_THROW_INFO_ONLY(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
 
     // bind pixel shader to pipeline
     pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0); // Set the pixel shader to the pipeline
 
     // create vertex shader
-    wrl::ComPtr<ID3D11VertexShader> pVertexShader;                                                                                 // Pointer to the vertex shader
-                                                                                                                                   // Pointer to the compiled vertex shader bytecode
-    GFX_THROW_FAILED(D3DReadFileToBlob(L"VertexShader.cso", &pVSBlob));                                                            // Load the compiled vertex shader bytecode from a file
-    GFX_THROW_FAILED(pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pVertexShader)); // Create the vertex shader from the compiled bytecode
+    wrl::ComPtr<ID3D11VertexShader> pVertexShader;                                                                                    // Pointer to the vertex shader
+                                                                                                                                      // Pointer to the compiled vertex shader bytecode
+    GFX_THROW_INFO_ONLY(D3DReadFileToBlob(L"VertexShader.cso", &pVSBlob));                                                            // Load the compiled vertex shader bytecode from a file
+    GFX_THROW_INFO_ONLY(pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pVertexShader)); // Create the vertex shader from the compiled bytecode
 
     // bind vertex shader to pipeline
     pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0); // Set the vertex shader to the pipeline
@@ -250,7 +268,7 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
             {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}, // Define the input layout for the vertex shader (position attribute)
         };
 
-    GFX_THROW_FAILED(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
+    GFX_THROW_INFO_ONLY(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
 
     // bind vertex layout to pipeline
     pDeviceContext->IASetInputLayout(pInputLayout.Get()); // Set the input layout to the input assembler stage
@@ -322,7 +340,7 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
     bd.StructureByteStride = sizeof(Vertex); // Size of each vertex structure
     D3D11_SUBRESOURCE_DATA initData = {};    // Initial data for the buffer
     initData.pSysMem = vertices;             // Pointer to the vertex data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&bd, &initData, &pVertexBuffer));
 
     unsigned short indices[60]; // Array to hold the indices of the D10 (trapezohedron)
     int indexCount = 0;
@@ -355,7 +373,7 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
     ibd.StructureByteStride = sizeof(unsigned short); // Size of each index
     D3D11_SUBRESOURCE_DATA indexData = {};            // Initial data for the index
     indexData.pSysMem = indices;                      // Pointer to the index data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&ibd, &indexData, &pIndexBuffer));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&ibd, &indexData, &pIndexBuffer));
 
     // Bind Index Buffer to pipeline
     pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0); // Set the index buffer to the input assembler stage (using 16-bit unsigned integers for indices)
@@ -389,7 +407,7 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
     cbd.StructureByteStride = 0;                 // Not a structured buffer
     D3D11_SUBRESOURCE_DATA cbData = {};          // Initial data for the constant buffer
     cbData.pSysMem = &cb;                        // Pointer to the constant buffer data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd, &cbData, &pConstantBuffer));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&cbd, &cbData, &pConstantBuffer));
 
     // Bind constant buffer to vertex shader
     pDeviceContext->VSSetConstantBuffers(0, 1, pConstantBuffer.GetAddressOf()); // Set the constant buffer to the vertex shader stage (register b0)
@@ -426,7 +444,7 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
     cbd2.StructureByteStride = 0;                // Not a structured buffer
     D3D11_SUBRESOURCE_DATA cbData2 = {};         // Initial data for the second constant buffer
     cbData2.pSysMem = &cb2;                      // Pointer to the second constant buffer data
-    GFX_THROW_FAILED(pDevice->CreateBuffer(&cbd2, &cbData2, &pConstantBuffer2));
+    GFX_THROW_INFO_ONLY(pDevice->CreateBuffer(&cbd2, &cbData2, &pConstantBuffer2));
 
     // Bind second constant buffer to pixel shader
     pDeviceContext->PSSetConstantBuffers(0, 1, pConstantBuffer2.GetAddressOf()); // Set the second constant buffer to the pixel shader stage (register b0)
@@ -435,17 +453,17 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
     wrl::ComPtr<ID3DBlob>
         pVSBlob;
     wrl::ComPtr<ID3D11PixelShader> pPixelShader;
-    GFX_THROW_FAILED(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
-    GFX_THROW_FAILED(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
+    GFX_THROW_INFO_ONLY(D3DReadFileToBlob(L"PixelShader.cso", &pVSBlob));                                                           // Load the compiled pixel shader bytecode from a file (reusing pVSBlob for simplicity)
+    GFX_THROW_INFO_ONLY(pDevice->CreatePixelShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pPixelShader)); // Create the pixel shader from the compiled bytecode
 
     // bind pixel shader to pipeline
     pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0); // Set the pixel shader to the pipeline
 
     // create vertex shader
-    wrl::ComPtr<ID3D11VertexShader> pVertexShader;                                                                                 // Pointer to the vertex shader
-                                                                                                                                   // Pointer to the compiled vertex shader bytecode
-    GFX_THROW_FAILED(D3DReadFileToBlob(L"VertexShader.cso", &pVSBlob));                                                            // Load the compiled vertex shader bytecode from a file
-    GFX_THROW_FAILED(pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pVertexShader)); // Create the vertex shader from the compiled bytecode
+    wrl::ComPtr<ID3D11VertexShader> pVertexShader;                                                                                    // Pointer to the vertex shader
+                                                                                                                                      // Pointer to the compiled vertex shader bytecode
+    GFX_THROW_INFO_ONLY(D3DReadFileToBlob(L"VertexShader.cso", &pVSBlob));                                                            // Load the compiled vertex shader bytecode from a file
+    GFX_THROW_INFO_ONLY(pDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pVertexShader)); // Create the vertex shader from the compiled bytecode
 
     // bind vertex shader to pipeline
     pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0); // Set the vertex shader to the pipeline
@@ -457,7 +475,7 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
             {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}, // Define the input layout for the vertex shader (position attribute)
         };
 
-    GFX_THROW_FAILED(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
+    GFX_THROW_INFO_ONLY(pDevice->CreateInputLayout(layout, ARRAYSIZE(layout), pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), &pInputLayout)); // Create the input layout
 
     // bind vertex layout to pipeline
     pDeviceContext->IASetInputLayout(pInputLayout.Get()); // Set the input layout to the input assembler stage

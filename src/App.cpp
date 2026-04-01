@@ -17,20 +17,20 @@ float currentx = 0.0f;
 float currenty = 0.0f;
 float currentz = 0.0f;
 
-App::App() : window(width, height, "Riki Engine") // Initialize the window with width, height, and title
+App::App() : window(800, 600, "Riki Engine") // Initialize the window with width, height, and title
 {
 std:
-    mt19937 rng{std::random_device{}()};                                     // Create a random number generator seeded with a random value from the random device
-    std::uniform_real_distribution<float> adist{0.0f, 2.0f * 3.1415926535f}; // Distribution for angles (0 to 2*pi)
-    std::uniform_real_distribution<float> ddist{0.0f, 2.0f * 3.1415926535f}; // Distribution for angles (0 to 2*pi)
-    std::uniform_real_distribution<float> odist{0.0f, 0.3f * 3.1415926535f}; // Distribution for offsets (0 to 0.3*pi)
-    std::uniform_real_distribution<float> rdist{6.0f, 20.0f};                // Distribution for speeds
-    for (auto i = 0; i < 100; i++)
+    mt19937 rng{std::random_device{}()};                             // Create a random number generator seeded with a random value from the random device
+    std::uniform_real_distribution<float> adist{0.0f, 2.0f * 3.14f}; // Distribution for angles (0 to 2*pi)
+    std::uniform_real_distribution<float> ddist{0.0f, 2.0f * 3.14f}; // Distribution for angles (0 to 2*pi)
+    std::uniform_real_distribution<float> odist{0.0f, 0.3f * 3.14f}; // Distribution for offsets (0 to 0.3*pi)
+    std::uniform_real_distribution<float> rdist{6.0f, 20.0f};        // Distribution for speeds
+    for (auto i = 0; i < 20; i++)
     {
-        boxes.push_back(std::make_unique<Box>(window.GetGraphics(), rng, adist, ddist, odist, rdist)); // Create 100 Box objects with random parameters and add them to the boxes vector
+        boxes.push_back(std::make_unique<Box>(window.GetGraphics(), rng, adist, ddist, odist, rdist)); // Create 20 Box objects with random parameters and add them to the boxes vector
     }
 
-    window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1.0f, 0.5f, 40.0f)); // Set the projection matrix for the graphics context to a perspective projection with specified parameters
+    window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f)); // Set the projection matrix for the graphics context to a perspective projection with specified parameters
 }
 
 App::~App() {}; // Default destructor for the App class (no custom cleanup needed)
@@ -50,7 +50,7 @@ int App::Go()
 void App::DoFrame()
 {
     window.GetGraphics().ClearBuffer(0.0f, 0.2f, 0.4f); // Clear the back buffer with a specified color (e.g., a shade of blue)
-    // window.GetGraphics().DrawTestCube(-angle / 5, std::sin(angle), 0.0f, 4.0f + std::cos(angle), width, height);
+    // window.GetGraphics().DrawTestCube(-angle / 5, std::sin(angle), 0.0f, 4.0f + std::cos(angle), 0.1f, width, height);
     /*
     if (currentx == 0.0f && currenty == 0.0f && currentz == 0.0f)
     {
@@ -116,10 +116,12 @@ void App::DoFrame()
 
     float dt = dtc.GetDeltaTime();                      // Get the delta time for the current frame (time elapsed since the last frame)
     cout << "Delta Time: " << dt << " seconds" << endl; // Output the delta time to the console for debugging purposes
+    int i = 0;
     for (auto &box : boxes)
     {
-        box->Update(dt);                 // Update each Box object with the calculated delta time (e.g., update their transformations, animations, etc.)
-        box->Draw(window.GetGraphics()); // Draw each Box object using the graphics context
+        cout << "Box " << i++ << ": " << box->GetTransformXM().r[3].m128_f32[0] << ", " << box->GetTransformXM().r[3].m128_f32[1] << ", " << box->GetTransformXM().r[3].m128_f32[2] << endl; // Output the current position of each Box object for debugging purposes
+        box->Update(dt);                                                                                                                                                                     // Update each Box object with the calculated delta time (e.g., update their transformations, animations, etc.)
+        box->Draw(window.GetGraphics());                                                                                                                                                     // Draw each Box object using the graphics context
     }
 
     window.GetGraphics().EndFrame();

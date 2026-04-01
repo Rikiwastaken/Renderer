@@ -14,26 +14,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 {
     try
     {
-        AllocConsole();
-        freopen("CONOUT$", "w", stdout);
-        std::cout << "Debug output visible in console!" << std::endl;
-
-        cout << "Creating window..." << endl;
         return App{}.Go();
     }
     catch (const RikiException &e)
     {
-        MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONERROR);
-        return -1;
+        MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
     }
     catch (const std::exception &e)
     {
-        MessageBoxA(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONERROR);
-        return -1;
+        MessageBoxA(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
     }
     catch (...)
     {
-        MessageBoxW(nullptr, L"An unknown error occurred.", L"Unknown Exception", MB_OK | MB_ICONERROR);
-        return -1;
-    };
+        MessageBoxA(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
+    }
+    return -1;
 }

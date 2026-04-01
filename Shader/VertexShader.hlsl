@@ -1,17 +1,9 @@
-struct VSOutput
-{
-    float4 position : SV_POSITION; // Output position to the rasterizer stage
-    
-};
-
 cbuffer CBuf
 {
-    matrix transform; // Transformation matrix for vertex positions (e.g., world-view-projection matrix)
+	matrix transform;
 };
 
-VSOutput main(float3 pos : POSITION)
+float4 main( float3 pos : Position ) : SV_Position
 {
-    VSOutput output;
-    output.position = mul(float4(pos.x, pos.y, pos.z, 1.0f), transform); // Transform the vertex position using the provided transformation matrix
-    return output;
+	return mul( float4(pos,1.0f),transform );
 }

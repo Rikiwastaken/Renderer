@@ -83,5 +83,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> pDeviceContext;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pRenderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> pDSV;
+    Microsoft::WRL::ComPtr<ID3D11RasterizerState> pRasterizerState;
     DirectX::XMMATRIX projection; // Projection matrix for the graphics context
 };
