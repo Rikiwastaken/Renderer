@@ -6,6 +6,7 @@
 #include "Mouse.h"
 #include "Graphics.h"
 #include <memory>
+#include "WindowsThrowMacros.h"
 
 class Window
 {
@@ -24,6 +25,7 @@ public:
     private:
         HRESULT hr;
     };
+    using HrException = Exception;
 
 private:
     // singleton manage regirstation and cleanup of the window class
@@ -63,7 +65,3 @@ public:
     Keyboard keyboard; // instance of the keyboard class to handle keyboard input for the window
     Mouse mouse;       // instance of the mouse class to handle mouse input for the window
 };
-
-// error exception helper macro
-#define CHWND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
-#define CHWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, GetLastError())

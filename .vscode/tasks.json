@@ -58,6 +58,8 @@
                 "/EHsc",
                 "/std:c++20",
                 "/Iinclude",
+                "src/Bindable/*.cpp",
+                "src/Drawable/*.cpp",
                 "src/*.cpp",
                 "src/resources.res",
                 "/link",

@@ -1,8 +1,9 @@
 #include "Graphics.h"
-#include "Exceptions.h"
 #include <cmath>
 #include <DirectXMath.h>
 #include <vector>
+#include <sstream>
+#include "GraphicsThrowMacros.h"
 
 namespace wrl = Microsoft::WRL; // Alias for Microsoft::WRL namespace to simplify code
 namespace dx = DirectX;         // Alias for DirectX namespace to simplify code
@@ -274,6 +275,11 @@ void Graphics::DrawTestCube(float angle, float x, float y, float z, float scale,
     // Draw indexed triangles using the currently set vertex buffer and index buffer (this is just a placeholder, actual implementation would require setting up vertex buffers, index buffers, shaders, etc.)
 }
 
+void Graphics::DrawIndexed(UINT indexCount)
+{
+    GFX_THROW_INFO_ONLY(pDeviceContext->DrawIndexed(indexCount, 0, 0)); // Draw indexed geometry using the currently bound vertex and index buffers (indexCount specifies the number of indices to draw)
+}
+
 void Graphics::DrawD10(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight)
 {
     struct Vertex
@@ -475,7 +481,124 @@ void Graphics::DrawD10(float angle, float x, float y, float z, float scale, floa
     pDeviceContext->DrawIndexed((UINT)std::size(indices), 0, 0);
 }
 
+void Graphics::SetProjection(DirectX::XMMATRIX proj) noexcept
+{
+    projection = proj;
+}
+
+DirectX::XMMATRIX Graphics::GetProjection() const noexcept
+{
+    return projection;
+}
+
 void Graphics::EndFrame()
 {
+    infoManager.Set();
     pSwapChain->Present(1u, 0u); // Present the back buffer to the screen with vsync enabled (1 for vsync, 0 for no vsync)
+}
+
+// Graphics exception stuff
+Graphics::HrException::HrException(int line, const char *file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept
+    : Exception(line, file),
+      hr(hr)
+{
+    // join all info messages with newlines into single string
+    for (const auto &m : infoMsgs)
+    {
+        info += m;
+        info.push_back('\n');
+    }
+    // remove final newline if exists
+    if (!info.empty())
+    {
+        info.pop_back();
+    }
+}
+
+const char *Graphics::HrException::what() const noexcept
+{
+    std::ostringstream oss;
+    oss << GetType() << std::endl
+        << "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode()
+        << std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl
+        << "[Error String] " << GetErrorString() << std::endl
+        << "[Description] " << GetErrorDescription() << std::endl;
+    if (!info.empty())
+    {
+        oss << "\n[Error Info]\n"
+            << GetErrorInfo() << std::endl
+            << std::endl;
+    }
+    oss << GetOriginString();
+    whatBuffer = oss.str();
+    return whatBuffer.c_str();
+}
+
+const char *Graphics::HrException::GetType() const noexcept
+{
+    return "Chili Graphics Exception";
+}
+
+HRESULT Graphics::HrException::GetErrorCode() const noexcept
+{
+    return hr;
+}
+
+std::string Graphics::HrException::GetErrorString() const noexcept
+{
+    return DXGetErrorString(hr);
+}
+
+std::string Graphics::HrException::GetErrorDescription() const noexcept
+{
+    char buf[512];
+    DXGetErrorDescription(hr, buf, sizeof(buf));
+    return buf;
+}
+
+std::string Graphics::HrException::GetErrorInfo() const noexcept
+{
+    return info;
+}
+
+const char *Graphics::DeviceRemovedException::GetType() const noexcept
+{
+    return "Chili Graphics Exception [Device Removed] (DXGI_ERROR_DEVICE_REMOVED)";
+}
+Graphics::InfoException::InfoException(int line, const char *file, std::vector<std::string> infoMsgs) noexcept
+    : Exception(line, file)
+{
+    // join all info messages with newlines into single string
+    for (const auto &m : infoMsgs)
+    {
+        info += m;
+        info.push_back('\n');
+    }
+    // remove final newline if exists
+    if (!info.empty())
+    {
+        info.pop_back();
+    }
+}
+
+const char *Graphics::InfoException::what() const noexcept
+{
+    std::ostringstream oss;
+    oss << GetType() << std::endl
+        << "\n[Error Info]\n"
+        << GetErrorInfo() << std::endl
+        << std::endl;
+    oss << GetOriginString();
+    whatBuffer = oss.str();
+    return whatBuffer.c_str();
+}
+
+const char *Graphics::InfoException::GetType() const noexcept
+{
+    return "Chili Graphics Info Exception";
+}
+
+std::string Graphics::InfoException::GetErrorInfo() const noexcept
+{
+    return info;
 }

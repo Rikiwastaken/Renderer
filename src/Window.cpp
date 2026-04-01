@@ -1,7 +1,7 @@
 #include "Window.h"
 #include <iostream>
 #include <sstream>
-#include "Exceptions.h"
+#include "WindowsThrowMacros.h"
 #include "Resource.h"
 
 Window::WindowClass Window::WindowClass::wndClass; // Define the static instance of the WindowClass
