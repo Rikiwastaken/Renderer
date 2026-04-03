@@ -3,7 +3,8 @@
 #include "Shapes/Cone.h"
 #include "GraphicsThrowMacros.h"
 
-Pyramid::Pyramid(Graphics &gfx, std::mt19937 &rng,
+Pyramid::Pyramid(Graphics &gfx,
+                 std::mt19937 &rng,
                  std::uniform_real_distribution<float> &adist,
                  std::uniform_real_distribution<float> &ddist,
                  std::uniform_real_distribution<float> &odist,
@@ -12,14 +13,15 @@ Pyramid::Pyramid(Graphics &gfx, std::mt19937 &rng,
       droll(ddist(rng)),
       dpitch(ddist(rng)),
       dyaw(ddist(rng)),
-      dtheta(ddist(rng)),
-      dphi(ddist(rng)),
-      dchi(ddist(rng)),
+      dphi(odist(rng)),
+      dtheta(odist(rng)),
+      dchi(odist(rng)),
+      chi(adist(rng)),
       theta(adist(rng)),
-      phi(adist(rng)),
-      chi(adist(rng))
+      phi(adist(rng))
 {
     namespace dx = DirectX;
+
     if (!isStaticInitialized())
     {
         struct Vertex
@@ -34,15 +36,17 @@ Pyramid::Pyramid(Graphics &gfx, std::mt19937 &rng,
             } color;
         };
         auto model = Cone::MakeTesselated<Vertex>(4);
-
+        // set vertex colors for mesh
         model.vertices[0].color = {255, 255, 0};
         model.vertices[1].color = {255, 255, 0};
         model.vertices[2].color = {255, 255, 0};
         model.vertices[3].color = {255, 255, 0};
         model.vertices[4].color = {255, 255, 80};
         model.vertices[5].color = {255, 10, 0};
-
+        // deform mesh linearly
         model.Transform(dx::XMMatrixScaling(1.0f, 1.0f, 0.7f));
+
+        AddStaticBind(std::make_unique<VertexBuffer>(gfx, model.vertices));
 
         auto pvs = std::make_unique<VertexShader>(gfx, L"ColorBlendVertexShader.cso");
         auto pvsbc = pvs->GetBytecode();

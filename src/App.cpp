@@ -87,70 +87,7 @@ int App::Go()
 
 void App::DoFrame()
 {
-    window.GetGraphics().ClearBuffer(0.0f, 0.0f, 0.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
-    // window.GetGraphics().DrawTestCube(-angle / 5, std::sin(angle), 0.0f, 4.0f + std::cos(angle), 0.1f, width, height);
-    /*
-    if (currentx == 0.0f && currenty == 0.0f && currentz == 0.0f)
-    {
-        float random1 = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f; // Generate a random float between -1.0 and 1.0 for the x coordinate
-        float random2 = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f; // Generate a random float between -1.0 and 1.0 for the y coordinate
-        currentx = random1 * (width / 2 - 100) / width;                        // Set the initial x coordinate based on the random value and window width
-        currenty = random2 * (height / 2 - 100) / height;
-    }
-
-    angle += 0.1f; // Increment the rotation angle for the test triangle (this will cause the triangle to rotate over time)
-    cout << "angle: " << angle << endl;
-
-    float moveperframe = 5.0f;
-    float offsetx = -0.3f * width;
-    float offsety = -0.1f * height;
-    if (goingright)
-    {
-        currentx += (moveperframe / width);
-    }
-    else
-    {
-        currentx -= moveperframe / width;
-    }
-    if (currentx > (width / 2 - offsetx) / width)
-    {
-        goingright = false;
-    }
-    else if (currentx < (-width / 2 + offsetx) / width)
-    {
-        goingright = true;
-    }
-
-    if (goingup)
-    {
-        currenty += moveperframe / height;
-    }
-    else
-    {
-        currenty -= moveperframe / height;
-    }
-
-    if (currenty > (height / 2 - offsety) / height)
-    {
-        goingup = false;
-    }
-    else if (currenty < (-height / 2 + offsety) / height)
-    {
-        goingup = true;
-    }
-
-    if (goingforward)
-    {
-        currentz += moveperframe;
-    }
-    else
-    {
-        currentz -= moveperframe;
-    }
-
-    // window.GetGraphics().DrawTestCube(angle / 5, currentx, currenty, 1, 0.1f, width, height);
-    window.GetGraphics().DrawD10(angle / 10, currentx, currenty, 1, 0.1f, width, height);
-    */
+    window.GetGraphics().ClearBuffer(1.0f, 1.0f, 1.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
 
     float dt = dtc.GetDeltaTime();                                    // Get the delta time for the current frame (time elapsed since the last frame)                // Calculate the current frame rate based on the delta time
     int framerate = dtc.GetFramerate();                               // Get the current frame rate from the DeltaTimeCalculator
