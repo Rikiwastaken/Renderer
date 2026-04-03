@@ -10,6 +10,6 @@ public:
     void Bind(Graphics &gfx) noexcept override;
 
 private:
-    VertexConstantBuffer<DirectX::XMMATRIX> pConstantBuffer; // Constant buffer to hold the transformation matrix for the drawable object
-    const Drawable &parent;                                  // Reference to the parent drawable object to access its transformation matrix
+    static std::unique_ptr<VertexConstantBuffer<DirectX::XMMATRIX>> pConstantBuffer; // Constant buffer to hold the transformation matrix for the drawable object
+    const Drawable &parent;                                                          // Reference to the parent drawable object to access its transformation matrix
 };

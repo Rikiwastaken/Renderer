@@ -14,9 +14,14 @@ void Drawable::Draw(Graphics &gfx) const noexcept
     int i = 0;
     for (auto &b : binds)
     {
-        std::cout << "Drawable::Draw() - Binding resource " << i++ << " of type " << typeid(*b).name() << std::endl;
         b->Bind(gfx); // Bind each resource in the vector of binds to the graphics pipeline
     }
+
+    for (auto &b : GetStaticBinds())
+    {
+        b->Bind(gfx); // Bind each static resource to the graphics pipeline (these are shared across all instances of the drawable)
+    }
+
     gfx.DrawIndexed(pIndexBuffer->GetCount());
 }
 

@@ -24,8 +24,8 @@ std:
     std::uniform_real_distribution<float> adist{0.0f, 2.0f * 3.14f}; // Distribution for angles (0 to 2*pi)
     std::uniform_real_distribution<float> ddist{0.0f, 2.0f * 3.14f}; // Distribution for angles (0 to 2*pi)
     std::uniform_real_distribution<float> odist{0.0f, 0.3f * 3.14f}; // Distribution for offsets (0 to 0.3*pi)
-    std::uniform_real_distribution<float> rdist{6.0f, 20.0f};        // Distribution for speeds
-    for (auto i = 0; i < 20; i++)
+    std::uniform_real_distribution<float> rdist{3.0f, 10.0f};        // Distribution for speeds
+    for (auto i = 0; i < 100; i++)
     {
         boxes.push_back(std::make_unique<Box>(window.GetGraphics(), rng, adist, ddist, odist, rdist)); // Create 20 Box objects with random parameters and add them to the boxes vector
     }
@@ -49,7 +49,7 @@ int App::Go()
 
 void App::DoFrame()
 {
-    window.GetGraphics().ClearBuffer(0.0f, 0.2f, 0.4f); // Clear the back buffer with a specified color (e.g., a shade of blue)
+    window.GetGraphics().ClearBuffer(0.0f, 0.0f, 0.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
     // window.GetGraphics().DrawTestCube(-angle / 5, std::sin(angle), 0.0f, 4.0f + std::cos(angle), 0.1f, width, height);
     /*
     if (currentx == 0.0f && currenty == 0.0f && currentz == 0.0f)
@@ -114,14 +114,13 @@ void App::DoFrame()
     window.GetGraphics().DrawD10(angle / 10, currentx, currenty, 1, 0.1f, width, height);
     */
 
-    float dt = dtc.GetDeltaTime();                      // Get the delta time for the current frame (time elapsed since the last frame)
-    cout << "Delta Time: " << dt << " seconds" << endl; // Output the delta time to the console for debugging purposes
-    int i = 0;
+    float dt = dtc.GetDeltaTime();                                    // Get the delta time for the current frame (time elapsed since the last frame)                // Calculate the current frame rate based on the delta time
+    int framerate = dtc.GetFramerate();                               // Get the current frame rate from the DeltaTimeCalculator
+    window.SetTitle("Riki Engine: " + to_string(framerate) + " FPS"); // Update the window title to display the current frame rate
     for (auto &box : boxes)
     {
-        cout << "Box " << i++ << ": " << box->GetTransformXM().r[3].m128_f32[0] << ", " << box->GetTransformXM().r[3].m128_f32[1] << ", " << box->GetTransformXM().r[3].m128_f32[2] << endl; // Output the current position of each Box object for debugging purposes
-        box->Update(dt);                                                                                                                                                                     // Update each Box object with the calculated delta time (e.g., update their transformations, animations, etc.)
-        box->Draw(window.GetGraphics());                                                                                                                                                     // Draw each Box object using the graphics context
+        box->Update(dt);                 // Update each Box object with the calculated delta time (e.g., update their transformations, animations, etc.)
+        box->Draw(window.GetGraphics()); // Draw each Box object using the graphics context
     }
 
     window.GetGraphics().EndFrame();
