@@ -5,7 +5,9 @@ class App
 {
 private:
     Window window;
-    std::vector<std::unique_ptr<class Box>> boxes; // Vector to hold unique pointers to Box objects, representing the drawable objects in the application
+    std::vector<std::unique_ptr<class Drawable>> drawables;
+    static constexpr int nDrawables = 100;
+
 public:
     App();
     int Go();

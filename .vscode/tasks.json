@@ -14,33 +14,15 @@
             "problemMatcher": []
         },
         {
-            "label": "Compile Vertex Shader",
+            "label": "Compile Shaders",
             "type": "shell",
-            "command": "${env:ProgramFiles(x86)}/Windows Kits/10/bin/10.0.26100.0/x64/fxc.exe",
+            "command": "powershell",
             "args": [
-                "/T",
-                "vs_5_0",
-                "/E",
-                "main",
-                "/Fo",
-                "VertexShader.cso",
-                "Shader/VertexShader.hlsl"
-            ],
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "Compile Pixel Shader",
-            "type": "shell",
-            "command": "${env:ProgramFiles(x86)}/Windows Kits/10/bin/10.0.26100.0/x64/fxc.exe",
-            "args": [
-                "/T",
-                "ps_5_0",
-                "/E",
-                "main",
-                "/Fo",
-                "PixelShader.cso",
-                "Shader/PixelShader.hlsl"
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/ShaderCompiler.ps1"
             ],
             "group": "build",
             "problemMatcher": []
@@ -50,8 +32,7 @@
             "type": "shell",
             "dependsOn": [
                 "Compile Resources",
-                "Compile Vertex Shader",
-                "Compile Pixel Shader"
+                "Compile Shaders"
             ],
             "command": "cl.exe",
             "args": [

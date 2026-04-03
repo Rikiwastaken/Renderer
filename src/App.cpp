@@ -3,6 +3,9 @@
 #include "Drawable/Box.h"
 #include <memory>
 #include "DeltaTimeCalculator.h"
+#include "Drawable/Melon.h"
+#include "Drawable/Pyramid.h"
+#include "CustomMath.h"
 
 using namespace std;
 
@@ -19,18 +22,53 @@ float currentz = 0.0f;
 
 App::App() : window(800, 600, "Riki Engine") // Initialize the window with width, height, and title
 {
-std:
-    mt19937 rng{std::random_device{}()};                             // Create a random number generator seeded with a random value from the random device
-    std::uniform_real_distribution<float> adist{0.0f, 2.0f * 3.14f}; // Distribution for angles (0 to 2*pi)
-    std::uniform_real_distribution<float> ddist{0.0f, 2.0f * 3.14f}; // Distribution for angles (0 to 2*pi)
-    std::uniform_real_distribution<float> odist{0.0f, 0.3f * 3.14f}; // Distribution for offsets (0 to 0.3*pi)
-    std::uniform_real_distribution<float> rdist{3.0f, 10.0f};        // Distribution for speeds
-    for (auto i = 0; i < 100; i++)
+    class Factory
     {
-        boxes.push_back(std::make_unique<Box>(window.GetGraphics(), rng, adist, ddist, odist, rdist)); // Create 20 Box objects with random parameters and add them to the boxes vector
-    }
+    public:
+        Factory(Graphics &gfx)
+            : gfx(gfx)
+        {
+        }
+        std::unique_ptr<Drawable> operator()()
+        {
+            switch (typedist(rng))
+            {
+            case 0:
+                return std::make_unique<Pyramid>(
+                    gfx, rng, adist, ddist,
+                    odist, rdist);
+            case 1:
+                return std::make_unique<Box>(
+                    gfx, rng, adist, ddist,
+                    odist, rdist, bdist);
+            case 2:
+                return std::make_unique<Melon>(
+                    gfx, rng, adist, ddist,
+                    odist, rdist, longdist, latdist);
+            default:
+                assert(false && "bad drawable type in factory");
+                return {};
+            }
+        }
 
-    window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f)); // Set the projection matrix for the graphics context to a perspective projection with specified parameters
+    private:
+        Graphics &gfx;
+        std::mt19937 rng{std::random_device{}()};
+        std::uniform_real_distribution<float> adist{0.0f, PI * 2.0f};
+        std::uniform_real_distribution<float> ddist{0.0f, PI * 0.5f};
+        std::uniform_real_distribution<float> odist{0.0f, PI * 0.08f};
+        std::uniform_real_distribution<float> rdist{6.0f, 20.0f};
+        std::uniform_real_distribution<float> bdist{0.4f, 3.0f};
+        std::uniform_int_distribution<int> latdist{5, 20};
+        std::uniform_int_distribution<int> longdist{10, 40};
+        std::uniform_int_distribution<int> typedist{0, 2};
+    };
+
+    Factory f(window.GetGraphics());
+    drawables.reserve(nDrawables);
+    std::generate_n(std::back_inserter(drawables), nDrawables, f);
+
+    window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 }
 
 App::~App() {}; // Default destructor for the App class (no custom cleanup needed)
@@ -117,10 +155,10 @@ void App::DoFrame()
     float dt = dtc.GetDeltaTime();                                    // Get the delta time for the current frame (time elapsed since the last frame)                // Calculate the current frame rate based on the delta time
     int framerate = dtc.GetFramerate();                               // Get the current frame rate from the DeltaTimeCalculator
     window.SetTitle("Riki Engine: " + to_string(framerate) + " FPS"); // Update the window title to display the current frame rate
-    for (auto &box : boxes)
+    for (auto &drawable : drawables)
     {
-        box->Update(dt);                 // Update each Box object with the calculated delta time (e.g., update their transformations, animations, etc.)
-        box->Draw(window.GetGraphics()); // Draw each Box object using the graphics context
+        drawable->Update(dt);                 // Update each Drawable object with the calculated delta time (e.g., update their transformations, animations, etc.)
+        drawable->Draw(window.GetGraphics()); // Draw each Drawable  object using the graphics context
     }
 
     window.GetGraphics().EndFrame();

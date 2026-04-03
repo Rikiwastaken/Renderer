@@ -17,7 +17,7 @@ public:
         assert("*Must* use AddIndexBuffer for index buffers" && typeid(*bind) != typeid(IndexBuffer)); // Ensure that the bind being added is not an index buffer (index buffers should be added using AddIndexBuffer)
         staticBinds.push_back(std::move(bind));                                                        // Add a bindable resource to the static binds vector (used for resources that are shared across all instances of the drawable)
     }
-    void AddStaticIndexBuffer(std::unique_ptr<Bindable> IndexBuf) noexcept
+    void AddStaticIndexBuffer(std::unique_ptr<IndexBuffer> IndexBuf) noexcept
     {
         assert(pIndexBuffer == nullptr);            // Ensure that the bind being added is an index buffer (index buffers should be added using AddIndexBuffer)
         pIndexBuffer = IndexBuf.get();              // Set the static index buffer pointer to the provided index buffer
@@ -25,12 +25,12 @@ public:
     }
     void SetIndexFromStatic() noexcept
     {
-        assert("Attempting to add index buffer a second time" && pIndexBuffer != nullptr); // Ensure that the static index buffer has been set before trying to use it
+        assert("Attempting to add index buffer a second time" && pIndexBuffer == nullptr); // Ensure that the static index buffer has been set before trying to use it
         for (const auto &b : staticBinds)
         {
-            if (typeid(*b) == typeid(IndexBuffer))
+            if (const auto p = dynamic_cast<IndexBuffer *>(b.get()))
             {
-                pIndexBuffer = dynamic_cast<const IndexBuffer *>(b.get()); // Set the instance index buffer pointer to the static index buffer
+                pIndexBuffer = p;
                 return;
             }
         }
