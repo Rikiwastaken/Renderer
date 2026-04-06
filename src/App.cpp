@@ -5,6 +5,7 @@
 #include "DeltaTimeCalculator.h"
 #include "Drawable/Melon.h"
 #include "Drawable/Pyramid.h"
+#include "Drawable/SkinnedBox.h"
 #include "CustomMath.h"
 #include "Surface.h"
 #include "GdiPlusManager.h"
@@ -38,17 +39,22 @@ App::App() : window(800, 600, "Riki Engine") // Initialize the window with width
             switch (typedist(rng))
             {
             case 0:
-                return std::make_unique<Pyramid>(
+                return std::make_unique<Sheet>(
                     gfx, rng, adist, ddist,
                     odist, rdist);
+
             case 1:
-                return std::make_unique<Box>(
+                return std::make_unique<SkinnedBox>(
                     gfx, rng, adist, ddist,
-                    odist, rdist, bdist);
+                    odist, rdist);
             case 2:
                 return std::make_unique<Melon>(
                     gfx, rng, adist, ddist,
                     odist, rdist, longdist, latdist);
+            case 3:
+                return std::make_unique<Pyramid>(
+                    gfx, rng, adist, ddist,
+                    odist, rdist);
             default:
                 assert(false && "bad drawable type in factory");
                 return {};
@@ -65,14 +71,12 @@ App::App() : window(800, 600, "Riki Engine") // Initialize the window with width
         std::uniform_real_distribution<float> bdist{0.4f, 3.0f};
         std::uniform_int_distribution<int> latdist{5, 20};
         std::uniform_int_distribution<int> longdist{10, 40};
-        std::uniform_int_distribution<int> typedist{0, 2};
+        std::uniform_int_distribution<int> typedist{0, 3};
     };
 
     Factory f(window.GetGraphics());
     drawables.reserve(nDrawables);
     std::generate_n(std::back_inserter(drawables), nDrawables, f);
-
-    const auto s = Surface::FromFile("resource/Riki.png");
 
     window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 }
@@ -100,8 +104,8 @@ void App::DoFrame()
     window.SetTitle("Riki Engine: " + to_string(framerate) + " FPS"); // Update the window title to display the current frame rate
     for (auto &drawable : drawables)
     {
-        drawable->Update(dt);                 // Update each Drawable object with the calculated delta time (e.g., update their transformations, animations, etc.)
-        drawable->Draw(window.GetGraphics()); // Draw each Drawable  object using the graphics context
+        drawable->Update(window.keyboard.KeyIsPressed(VK_SPACE) ? 0.0f : dt); // Update each Drawable object with the calculated delta time (e.g., update their transformations, animations, etc.)
+        drawable->Draw(window.GetGraphics());                                 // Draw each Drawable  object using the graphics context
     }
 
     window.GetGraphics().EndFrame();
