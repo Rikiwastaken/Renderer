@@ -6,8 +6,12 @@
 #include "Drawable/Melon.h"
 #include "Drawable/Pyramid.h"
 #include "CustomMath.h"
+#include "Surface.h"
+#include "GdiPlusManager.h"
 
 using namespace std;
+
+GDIPlusManager gdiPlusManager; // Global instance of the GDIPlusManager to manage the initialization and cleanup of GDI+ for image loading and saving
 
 float angle = 0.0f;      //   Global variable to track the rotation angle for the test triangle (used in DrawTestTriangle function)
 DeltaTimeCalculator dtc; // Global instance of the DeltaTimeCalculator to calculate delta time for frame updates
@@ -67,6 +71,8 @@ App::App() : window(800, 600, "Riki Engine") // Initialize the window with width
     Factory f(window.GetGraphics());
     drawables.reserve(nDrawables);
     std::generate_n(std::back_inserter(drawables), nDrawables, f);
+
+    const auto s = Surface::FromFile("resource/Riki.png");
 
     window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 }
