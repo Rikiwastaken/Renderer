@@ -174,6 +174,10 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
     }
     case WM_SYSKEYDOWN:
     {
+        if (ImGui::GetIO().WantCaptureKeyboard) // If ImGui wants to capture the keyboard input, do not process it for the application
+        {
+            break;
+        }
         if (!(lParam & 0x40000000) || keyboard.AutorepeatIsEnabled()) // Check if the key is being held down (autorepeat) and if autorepeat is enabled
         {
             keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
@@ -182,16 +186,29 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
     }
     case WM_KEYUP:
     {
+        if (ImGui::GetIO().WantCaptureKeyboard) // If ImGui wants to capture the keyboard input, do not process it for the application
+        {
+            break;
+        }
         keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
         break;
     }
     case WM_SYSKEYUP:
     {
+        if (ImGui::GetIO().WantCaptureKeyboard) // If ImGui wants to capture the keyboard input, do not process it for the application
+        {
+            break;
+        }
+
         keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
         break;
     }
     case WM_CHAR:
     {
+        if (ImGui::GetIO().WantCaptureKeyboard) // If ImGui wants to capture the keyboard input, do not process it for the application
+        {
+            break;
+        }
         keyboard.OnChar(static_cast<char>(wParam));
         break;
     }

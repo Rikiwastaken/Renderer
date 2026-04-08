@@ -657,3 +657,13 @@ Graphics::~Graphics()
         ImGui_ImplDX11_Shutdown();
     }
 }
+
+void Graphics::SetCamera(DirectX::XMMATRIX cam) noexcept
+{
+    camera = cam;
+}
+
+DirectX::XMMATRIX Graphics::GetCamera() const noexcept
+{
+    return camera;
+}

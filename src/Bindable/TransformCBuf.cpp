@@ -11,7 +11,7 @@ TransformCbuf::TransformCbuf(Graphics &gfx, const Drawable &parent)
 
 void TransformCbuf::Bind(Graphics &gfx) noexcept
 {
-    pConstantBuffer->Update(gfx, DirectX::XMMatrixTranspose(parent.GetTransformXM() * gfx.GetProjection()));
+    pConstantBuffer->Update(gfx, DirectX::XMMatrixTranspose(parent.GetTransformXM() * gfx.GetCamera() * gfx.GetProjection()));
     pConstantBuffer->Bind(gfx); // Update the constant buffer with the transposed transformation matrix and bind it to the graphics pipeline
 }
 

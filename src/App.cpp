@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace dx = DirectX;
+
 GDIPlusManager gdiPlusManager; // Global instance of the GDIPlusManager to manage the initialization and cleanup of GDI+ for image loading and saving
 
 float angle = 0.0f;      //   Global variable to track the rotation angle for the test triangle (used in DrawTestTriangle function)
@@ -80,6 +82,7 @@ App::App() : window(800, 600, "Riki Engine") // Initialize the window with width
     std::generate_n(std::back_inserter(drawables), nDrawables, f);
 
     window.GetGraphics().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
+    window.GetGraphics().SetCamera(DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
 }
 
 App::~App() {}; // Default destructor for the App class (no custom cleanup needed)
@@ -100,20 +103,19 @@ void App::DoFrame()
 {
     window.GetGraphics().BeginFrame(1.0f, 1.0f, 1.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
 
-    float dt = dtc.GetDeltaTime();                                    // Get the delta time for the current frame (time elapsed since the last frame)                // Calculate the current frame rate based on the delta time
-    int framerate = dtc.GetFramerate();                               // Get the current frame rate from the DeltaTimeCalculator
-    window.SetTitle("Riki Engine: " + to_string(framerate) + " FPS"); // Update the window title to display the current frame rate
+    float dt = dtc.GetDeltaTime() * speed_facotr; // Get the delta time for the current frame (time elapsed since the last frame)
     for (auto &drawable : drawables)
     {
         drawable->Update(window.keyboard.KeyIsPressed(VK_SPACE) ? 0.0f : dt); // Update each Drawable object with the calculated delta time (e.g., update their transformations, animations, etc.)
         drawable->Draw(window.GetGraphics());                                 // Draw each Drawable  object using the graphics context
     }
 
-    static bool show_demo_window = true; // Static variable to control the visibility of the ImGui demo window
-    if (show_demo_window && ImGui::GetCurrentContext() != nullptr)
+    // imgui window to control speed factor
+    if (ImGui::Begin("Control Panel"))
     {
-        ImGui::ShowDemoWindow(&show_demo_window); // Show the ImGui demo window if the show_demo_window variable is true
+        ImGui::SliderFloat("Speed Factor", &speed_facotr, 0.01f, 5.0f);                                                            // Slider to control the speed factor for the animation
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate); // Display the average frame time and frames per second (FPS) in the ImGui window
     }
-
+    ImGui::End();
     window.GetGraphics().EndFrame();
 }

@@ -10,6 +10,7 @@ private:
     std::vector<std::unique_ptr<class Drawable>> drawables;
     static constexpr int nDrawables = 100;
     ImGuiManager imguimanager;
+    float speed_facotr = 1.0f;
 
 public:
     App();

@@ -64,6 +64,8 @@ public:
     void DrawIndexed(UINT indexCount);                         // Function to draw indexed geometry using the currently bound vertex and index buffers
     void SetProjection(DirectX::XMMATRIX projection) noexcept; // Function to set the projection matrix for the graphics context
     DirectX::XMMATRIX GetProjection() const noexcept;          // Function to get the current projection matrix
+    void SetCamera(DirectX::XMMATRIX camera) noexcept;         // Function to set the camera/view matrix for the graphics context
+    DirectX::XMMATRIX GetCamera() const noexcept;              // Function to get the
     void EnableImGui() noexcept;                               // Function to enable ImGui rendering (initializes ImGui for DirectX 11)
     void DisableImGui() noexcept;                              // Function to disable ImGui rendering (shuts down ImGui for DirectX 11)
     bool IsImGuiEnabled() const noexcept;                      // Function to check if ImGui rendering is currently enabled
@@ -89,4 +91,5 @@ private:
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> pRasterizerState;
     DirectX::XMMATRIX projection; // Projection matrix for the graphics context
     bool imguiEnabled = true;     // Flag to track whether ImGui rendering is enabled
+    DirectX::XMMATRIX camera;     // Camera/view matrix for the graphics context
 };
