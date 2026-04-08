@@ -4,6 +4,8 @@
 #include <vector>
 #include <sstream>
 #include "GraphicsThrowMacros.h"
+#include "imgui/imgui_impl_dx11.h"
+#include "imgui/imgui_impl_win32.h"
 
 namespace wrl = Microsoft::WRL; // Alias for Microsoft::WRL namespace to simplify code
 namespace dx = DirectX;         // Alias for DirectX namespace to simplify code
@@ -106,8 +108,15 @@ Graphics::Graphics(HWND hWnd)
     pDeviceContext->RSSetViewports(1, &vp);
 }
 
-void Graphics::ClearBuffer(float r, float g, float b) noexcept // Function to clear the back buffer with a specified color
+void Graphics::BeginFrame(float r, float g, float b) noexcept // Function to clear the back buffer with a specified color
 {
+    // imgui begin frame
+    if (imguiEnabled)
+    {
+        ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+    }
     const float color[] = {r, g, b, 1.0f};                                         // RGBA color array
     pDeviceContext->ClearRenderTargetView(pRenderTargetView.Get(), color);         // Clear the render target view with the specified color
     pDeviceContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0); // Clear the depth stencil view (clearing only the depth buffer with a value of 1.0f)
@@ -511,6 +520,11 @@ DirectX::XMMATRIX Graphics::GetProjection() const noexcept
 
 void Graphics::EndFrame()
 {
+    if (imguiEnabled)
+    {
+        ImGui::Render();
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+    }
     infoManager.Set();
     pSwapChain->Present(1u, 0u); // Present the back buffer to the screen with vsync enabled (1 for vsync, 0 for no vsync)
 }
@@ -619,4 +633,27 @@ const char *Graphics::InfoException::GetType() const noexcept
 std::string Graphics::InfoException::GetErrorInfo() const noexcept
 {
     return info;
+}
+
+void Graphics::EnableImGui() noexcept
+{
+    imguiEnabled = true;
+}
+
+void Graphics::DisableImGui() noexcept
+{
+    imguiEnabled = false;
+}
+
+bool Graphics::IsImGuiEnabled() const noexcept
+{
+    return imguiEnabled;
+}
+
+Graphics::~Graphics()
+{
+    if (imguiEnabled)
+    {
+        ImGui_ImplDX11_Shutdown();
+    }
 }

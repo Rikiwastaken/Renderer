@@ -9,6 +9,7 @@
 #include "CustomMath.h"
 #include "Surface.h"
 #include "GdiPlusManager.h"
+#include "imgui/imgui.h"
 
 using namespace std;
 
@@ -97,7 +98,7 @@ int App::Go()
 
 void App::DoFrame()
 {
-    window.GetGraphics().ClearBuffer(1.0f, 1.0f, 1.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
+    window.GetGraphics().BeginFrame(1.0f, 1.0f, 1.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
 
     float dt = dtc.GetDeltaTime();                                    // Get the delta time for the current frame (time elapsed since the last frame)                // Calculate the current frame rate based on the delta time
     int framerate = dtc.GetFramerate();                               // Get the current frame rate from the DeltaTimeCalculator
@@ -106,6 +107,12 @@ void App::DoFrame()
     {
         drawable->Update(window.keyboard.KeyIsPressed(VK_SPACE) ? 0.0f : dt); // Update each Drawable object with the calculated delta time (e.g., update their transformations, animations, etc.)
         drawable->Draw(window.GetGraphics());                                 // Draw each Drawable  object using the graphics context
+    }
+
+    static bool show_demo_window = true; // Static variable to control the visibility of the ImGui demo window
+    if (show_demo_window && ImGui::GetCurrentContext() != nullptr)
+    {
+        ImGui::ShowDemoWindow(&show_demo_window); // Show the ImGui demo window if the show_demo_window variable is true
     }
 
     window.GetGraphics().EndFrame();

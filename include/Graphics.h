@@ -56,14 +56,17 @@ public:
     Graphics(HWND hWnd);
     Graphics(const Graphics &) = delete;            // Delete copy constructor
     Graphics &operator=(const Graphics &) = delete; // Delete copy assignment operator
-    ~Graphics() = default;
+    ~Graphics();
     void EndFrame();                                                                                               // Function to present the back buffer to the screen
-    void ClearBuffer(float r, float g, float b) noexcept;                                                          // Function to clear the back buffer with a specified color
+    void BeginFrame(float r, float g, float b) noexcept;                                                           // Function to clear the back buffer with a specified color
     void DrawTestCube(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight); // Function to draw a test triangle
     void DrawD10(float angle, float x, float y, float z, float scale, float windowWidth, float windowHeight);
     void DrawIndexed(UINT indexCount);                         // Function to draw indexed geometry using the currently bound vertex and index buffers
     void SetProjection(DirectX::XMMATRIX projection) noexcept; // Function to set the projection matrix for the graphics context
     DirectX::XMMATRIX GetProjection() const noexcept;          // Function to get the current projection matrix
+    void EnableImGui() noexcept;                               // Function to enable ImGui rendering (initializes ImGui for DirectX 11)
+    void DisableImGui() noexcept;                              // Function to disable ImGui rendering (shuts down ImGui for DirectX 11)
+    bool IsImGuiEnabled() const noexcept;                      // Function to check if ImGui rendering is currently enabled
     ID3D11Device *GetDevice() const noexcept
     {
         return pDevice.Get();
@@ -85,4 +88,5 @@ private:
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> pDSV;
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> pRasterizerState;
     DirectX::XMMATRIX projection; // Projection matrix for the graphics context
+    bool imguiEnabled = true;     // Flag to track whether ImGui rendering is enabled
 };

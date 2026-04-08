@@ -42,3 +42,8 @@
 
 #Shader files
 *.cso
+
+#imgui generated files (.ini, .log, .bak, etc.)
+imgui.ini
+imgui.log
+imgui.bak

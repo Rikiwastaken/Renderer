@@ -1,8 +1,9 @@
 #include "Window.h"
 #include <iostream>
 #include <sstream>
-
 #include "Resource.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx11.h"
 
 Window::WindowClass Window::WindowClass::wndClass; // Define the static instance of the WindowClass
 
@@ -83,12 +84,27 @@ Window::Window(int width, int height, const char *name) : width(width), height(h
     SendMessage(hWnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSm));
     // Show the window
     ShowWindow(hWnd, SW_SHOWDEFAULT);
+    // init imgui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+
+    // Optional but recommended
+    ImGui::StyleColorsDark();
+
+    // Then initialize your backend (example)
+    ImGui_ImplWin32_Init(&hWnd);
+
     // Create the Graphics object for rendering in the window
     pGraphics = std::make_unique<Graphics>(hWnd);
+
+    ImGui_ImplDX11_Init(pGraphics->GetDevice(), pGraphics->GetContext());
 }
 
 Window::~Window() // destructor to destroy the window when the object goes out of scope
 {
+    ImGui_ImplWin32_Shutdown();
     DestroyWindow(hWnd);
 }
 
@@ -123,6 +139,10 @@ LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 // member function to handle messages for the window
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+    {
+        return true;
+    }
     switch (msg)
     {
     case WM_CREATE:

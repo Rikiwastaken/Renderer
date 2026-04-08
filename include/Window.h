@@ -12,6 +12,7 @@ class Window
 {
 
 public:
+    bool running = true; // Flag to indicate if the window is still running (used in the message loop to determine when to exit)
     class Exception : public RikiException
     {
         using RikiException::RikiException;
