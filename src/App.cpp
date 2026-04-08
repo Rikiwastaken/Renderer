@@ -101,9 +101,9 @@ int App::Go()
 
 void App::DoFrame()
 {
-    window.GetGraphics().BeginFrame(1.0f, 1.0f, 1.0f); // Clear the back buffer with a specified color (e.g., a shade of blue)
-
-    float dt = dtc.GetDeltaTime() * speed_facotr; // Get the delta time for the current frame (time elapsed since the last frame)
+    window.GetGraphics().BeginFrame(1.0f, 1.0f, 1.0f);  // Clear the back buffer with a specified color (e.g., a shade of blue)
+    window.GetGraphics().SetCamera(camera.GetMatrix()); // Set the camera view matrix for rendering (e.g., to control the perspective and orientation of the scene)
+    float dt = dtc.GetDeltaTime() * speed_facotr;       // Get the delta time for the current frame (time elapsed since the last frame)
     for (auto &drawable : drawables)
     {
         drawable->Update(window.keyboard.KeyIsPressed(VK_SPACE) ? 0.0f : dt); // Update each Drawable object with the calculated delta time (e.g., update their transformations, animations, etc.)
@@ -117,5 +117,7 @@ void App::DoFrame()
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate); // Display the average frame time and frames per second (FPS) in the ImGui window
     }
     ImGui::End();
+
+    camera.SpawnControlWindow(); // Spawn a control window for the camera (e.g., to allow user input for controlling the camera's position and orientation)
     window.GetGraphics().EndFrame();
 }

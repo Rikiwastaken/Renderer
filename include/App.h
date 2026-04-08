@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "Drawable/Sheet.h"
 #include "imgui/Imguimanager.h"
+#include "Camera.h"
 
 class App
 {
@@ -11,6 +12,7 @@ private:
     static constexpr int nDrawables = 100;
     ImGuiManager imguimanager;
     float speed_facotr = 1.0f;
+    Camera camera;
 
 public:
     App();
